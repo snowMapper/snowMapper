@@ -1,16 +1,27 @@
-## Hi there 👋
+# snowMapper
 
-<!--
-**snowMapper/snowMapper** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
+*A Python GEE package for mapping & reconstructing high-res daily snow cover.*
 
-Here are some ideas to get you started:
+<img width="1446" height="945" alt="snowMapper" src="https://github.com/user-attachments/assets/8f4a1e87-51ef-402c-9522-734c3b81fff8" />
 
-- 🔭 I’m currently working on ...
-- 🌱 I’m currently learning ...
-- 👯 I’m looking to collaborate on ...
-- 🤔 I’m looking for help with ...
-- 💬 Ask me about ...
-- 📫 How to reach me: ...
-- 😄 Pronouns: ...
-- ⚡ Fun fact: ...
--->
+SnowMapper, is a modular, open-access, physics-informed, machine-learning-driven model for reconstructing snow cover. It is (a) trained on in-situ data, (b) forced by reanalysis-derived meteorological conditions, and (c) assimilated with binary snow cover from high-resolution satellite imagery from all Landsat missions (i.e. 1984 onwards) and Sentinel-2. The model output is daily snow cover, or monthly means (i.e. monthly snow cover fraction), at a scale of 100 m, and it is equipped with an integrated validation scheme providing the accuracy of the model run as metadata in the final output. The entire process is performed using the cloud-based resources of Google Earth Engine through the Python API. It is optimal for reconstructing monthly snow cover fraction across a mountain or catchment.
+
+Download the GMBA mountains dataset used as domain [here](https://www.earthenv.org/mountains)!
+
+Choose one of two environment files based on your operating system.
+
+For MacOs:
+```
+conda env create -f environment_macos.yaml
+```
+For Windows:
+```
+conda env create -f environment_windows.yaml
+```
+Activate environment:
+```
+conda activate snowmapper
+```
+```
+import snowmapper as sm
+```
