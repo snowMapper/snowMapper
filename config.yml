@@ -1,0 +1,379 @@
+#------------------------------------------
+# Output folder
+#------------------------------------------
+ee_project: "<YOUR_EE_PROJECT_NAME>"
+
+#------------------------------------------
+# CRS & scale (meters)
+#------------------------------------------
+CRS: "EPSG:4326"  # Default: "EPSG:4326"
+SCALE: 100        # Default: 100
+
+#------------------------------------------
+# Domain paths
+#------------------------------------------
+# Path to domain / subdomain ... Must contain a columns named 'MapName' with a str used to define 'roi_name'.
+#                                Subdomain must be within the area of the domain, and can be used for aggregation of final
+#                                results to smaller areas. If no subdomain exists, enter the same path as in the domain.
+#                                Options: - Earth Engine feature collection (prefered) -> should be stored under 'projects/<ee_project>/assets/snowMapper/<filename>'
+#                                         - SHP (will be converted to EE asset internally) -> should be stored under './input_files/roi/<filename>'
+domain_path: "projects/snowmapper/assets/test_domain"  
+subdomain_path: "projects/snowmapper/assets/test_domain"
+roi_name: "Mount Olympus"  # Name of ROI domain in 'MapName' field - same for both domain and subdomain.
+
+#------------------------------------------
+# Training data
+#------------------------------------------
+stations:                                                               # OPTIONAL: File containing list of stations. Can be .csv or EE. Otherwise, leave empty.
+                                                                        # Column names: | 'STAID' (6-digit int) | 'lat' (float) | 'lon' (float) | 'elev' (float) |
+
+input_dir: "./input_files/training/stations_daily_raw/"                 # Directory of folder with raw station files
+                                                                        # Filename format: 'STAIDXXXXXX.txt' (XXXXXX same as in 'STAID' column in 'stations.csv')
+                                                                        # Column names: | 'DATE' (YYYY-MM-DD) | 'TG' (degC) | 'RR' (mm) | 'SD' (cm) |
+
+SC_THRES: 1                                                             # Options: 1, 3, 5, 10 (Reconstruction accuracy will be affected if SC_THRES
+                                                                        #                       is too low/high for the selected SCALE)
+                                                                        # Literature: Barrou Dumont et al. (2025) https://doi.org/10.5194/tc-19-2407-2025
+                                                                        #             Pan et al. (2024) https://doi.org/10.5194/essd-16-2501-2024
+                                                                        #             Poussin et al. (2024) https://doi.org/10.1016/j.srs.2024.100182
+                                                                        #             Sadeghi et al. (2025) https://doi.org/10.1002/joc.8780
+                                                                        #             Notarnicola (2020) https://doi.org/10.1016/j.rse.2020.111781
+
+output_root: "./input_files/training/"                                  # Root directory where folder will be automatically created (suffix '*_SD{SC_THRES}'),
+                                                                        # to store post-processed station files (original filenames are maintained)
+
+sample_size: 10000                                                      # Intended sample size for the training_df. 
+                                                                        # Final size of the df will be smaller due to sampling method.
+
+training_dataset:                                                       # OPTIONAL: Path for pre-constructed training dataset. Leave empty otherwise.
+                                                                        # Filename format: "training_<SCALE>m_SD<SC_THRES>_<sample_size/1000>k.csv"
+
+classifier_path: "projects/snowmapper/assets/random_forest_classifier"  # OPTIONAL: Path for pre-trained machine learning classifier. Leave empty otherwise.
+
+#------------------------------------------
+# Timeframe settings
+#------------------------------------------
+START_YEAR: 2024            # Options: Int year ............... Default: - (no earlier than 1984)
+START_MONTH: 10             # Options: Int month .............. Default: 10 (used only for initialisation - omitted from final data)
+END_TODAY: false            # Options: Boolean ................ Default: false (if set to true, END_YEAR and END_MONTH will be disregarded)
+END_YEAR: 2025              # Options: Int year ............... Default: - (no later than current year/month)
+END_MONTH: 5                # Options: Int month .............. Default: 5 (May is often the last month of the snow season)
+START_HOUR: 10              # Options: Int hour ............... Default: 10 (most satellite passes happen ~10 a.m.)
+SPIN_UP_PERIOD: 1           # Options: Int period in months ... Default: 1 (removes the initialisation month)
+SC_PROBAB_START_YEAR: 1991  # Options: Int year ............... Default: 1991
+SC_PROBAB_END_YEAR: 2020    # Options: Int year ............... Default: 2020 (must be at least 10 years after the SC_PROBAB_START_YEAR)
+
+#------------------------------------------
+# Masks
+#------------------------------------------
+masks:
+  elevation: 700                           # Options: - false
+                                           #          - Int in m asl (e.g. 1000) ............................ "USGS/SRTMGL1_003"
+  glaciers: glims                          # Options: - false
+                                           #          - glims (no download required) ........................ "GLIMS/20230607"
+  water: jrc_global_surface_water          # Options: - false
+                                           #          - jrc_global_surface_water (no download required) ..... "JRC/GSW1_4/GlobalSurfaceWater"
+                                           #          - esa_worldcover (no download required) ............... "ESA/WorldCover/v100"
+  forest: jrc_global_forest_cover          # Options: - false
+                                           #          - esa_worldcover (no download required) ............... "ESA/WorldCover/v100"
+                                           #          - jrc_global_forest_cover (no download required) ...... "JRC/GFC2020/V2"
+                                           #          - copernicus_tree_cover_density (download required) ...
+                                           #            CLMS (2018) https://doi.org/10.2909/8bfbda74-7b62-4659-96dd-86600ea425a2
+                                           #            Download .tif and upload as EE Asset, then adapt path in sm.create_mask().
+                                           #            Mask for tree cover density is currently to 50% based on
+                                           #            Barrou Dumont et al. (2025) https://doi.org/10.5194/tc-19-2407-2025
+  urban: false                             # Options: - false
+                                           #          - esa_worldcover (no download required) ............... "ESA/WorldCover/v100"
+
+#------------------------------------------
+# Satellite missions
+#------------------------------------------
+missions:
+  Sentinel_2: true  # "COPERNICUS/S2_SR_HARMONIZED" ... '2017-03-28' - ongoing
+  Landsat_9: true   # "LANDSAT/LC09/C02/T1_L2" ........ '2021-10-31' - ongoing
+  Landsat_8: true   # "LANDSAT/LC08/C02/T1_L2" ........ '2013-03-18' - ongoing
+  Landsat_7: true   # "LANDSAT/LE07/C02/T1_L2" ........ '1999-05-28' - '2024-01-19'
+  Landsat_5: true   # "LANDSAT/LT05/C02/T1_L2" ........ '1984-03-16' - '2012-05-05'
+  Landsat_4: true   # "LANDSAT/LT04/C02/T1_L2" ........ '1982-08-22' - '1993-06-24'
+
+#------------------------------------------
+# Binary snow methods & thresholds
+#------------------------------------------
+sc_method:  # Activate only one method. 
+             # More info on each method can be found on the respective papers (DOIs available).
+             
+  ndsi:                         # Normalised Difference Snow Index
+    active: true
+    thresholds:
+      NDSI_THRES: 0.40          # Default: 0.40 ........ Moazzam et al. (2022) https://doi.org/10.3389/fenvs.2022.1006399
+                                # Alternative: 0.154 ... Choler et al. (2024) https://doi.org/10.1038/s41558-024-02177-x
+
+  Otsu_ndsi:                    # Optimised Normalised Difference Snow Index threshold
+    active: false               # Based on Otsu (1979) https://doi.org/10.1109/TSMC.1979.4310076
+
+  Gascoin_2015:                 # Gascoin et al. (2015) https://doi.org/10.5194/hess-19-2337-2015
+    active: false
+    thresholds:
+      NDSI_THRES: 0.40          # Default: 0.40
+      RED_THRES: 0.12           # Default: 0.12
+      SWIR_THRES: 0.16          # Default: 0.16
+
+  Gascoin_2019:                 # Gascoin et al. (2019) https://doi.org/10.5194/essd-11-493-2019 (modified)
+    active: false
+    thresholds:
+      NDSI_THRES: 0.40          # Default: 0.40
+      RED_THRES: 0.20           # Default: 0.20
+
+  Koehler_2022:                 # Koehler et al. (2022) https://doi.org/10.3390/rs14184461 (modified)
+    active: false               # Leave 'TEMP_THRES' blank if 'Sentinel_2' is selected.
+    thresholds:
+      NDSI_THRES: 0.40          # Default: 0.40
+      TEMP_THRES: 288           # Default: 288
+      NDVI_THRES: 0.10          # Default: 0.10
+      WATER_NDWI_THRES: 0.00    # Default: 0.00
+      WATER_GREEN_THRES: 0.20   # Default: 0.20
+      SHADOW_SWIR_THRES: 0.02   # Default: 0.02
+      SHADOW_GREEN_THRES: 0.20  # Default: 0.20
+      SHADOW_NDVI_THRES: 0.10   # Default: 0.10
+      NDLI_THRES: 0.10          # Default: 0.10
+
+  Wang_2025:                    # Wang et al. (2025) https://doi.org/10.1016/j.jhydrol.2025.133303
+    active: false               # Leave 'TEMP_THRES' blank if 'Sentinel_2' is selected.
+    thresholds:
+      NDSI_THRES_P1: 0.40       # Default: 0.40
+      BLUE_THRES_P1: 0.20       # Default: 0.20
+      NDSI_THRES_P2: 0.12       # Default: 0.12
+      BLUE_THRES_P2: 0.07       # Default: 0.07
+      NDWI_THRES_P2: 0.20       # Default: 0.20
+      NDSI_THRES_P3: 0.45       # Default: 0.45
+      BLUE_THRES_P3: 0.07       # Default: 0.07
+      NDSI_THRES_P4: 0.00       # Default: 0.00
+      NDFSI_THRES_P4: 0.50      # Default: 0.50
+      BLUE_THRES_P4: 0.07       # Default: 0.07
+      NDSI_THRES_P5: 0.70       # Default: 0.70
+      NDFSI_THRES_P5: 0.70      # Default: 0.70
+      TEMP_THRES: 288           # Default: 283
+
+#------------------------------------------
+# Auxiliary data directories
+#------------------------------------------
+# Select between SRTM and ALOS derived products - modification of ee.Image.select() on sm.read_config() may be needed.
+dem: "USGS/SRTMGL1_003"                   # Options: "USGS/SRTMGL1_003", "JAXA/ALOS/AW3D30/V4_1"
+chili: "CSP/ERGo/1_0/Global/SRTM_CHILI"   # Options: "CSP/ERGo/1_0/Global/SRTM_CHILI", "CSP/ERGo/1_0/Global/ALOS_CHILI"
+mtpi: "CSP/ERGo/1_0/Global/SRTM_mTPI"     # Options: "CSP/ERGo/1_0/Global/SRTM_mTPI", "CSP/ERGo/1_0/Global/ALOS_mTPI"
+
+landcover: "ESA/WorldCover/v100"          # Options: "ESA/WorldCover/v100"
+clim: "ECMWF/ERA5_LAND/HOURLY"            # Options: "ECMWF/ERA5_LAND/HOURLY"
+# If using ERA5-Land, manualy upload reanalysis geopotential height .tif (=geopotential/g) as ee.Image().
+clim_elev: "projects/<YOUR_PROJECT_NAME>/assets/snowmapper/ERA5_Land_geopotential_height"
+
+# Optional: Use pre-constructed monthly multi-year snow cover probability image collection available for the
+#           Mediterranean mountain regions. To use, skip 'Step 1' on the '1_snowMapper_main' notebook.
+sc_probab_col: "projects/snowmapper/assets/sc_probab_col_1984_2024_250625_100m"
+
+#------------------------------------------
+# MicroMet downscaling constants
+#------------------------------------------
+constants:     # Northern hemisphere defaults ... Liston & Elder (2006) https://doi.org/10.1175/JHM486.1
+  month:
+    - 1        # Jan
+    - 2        # Feb
+    - 3        # Mar
+    - 4        # Apr
+    - 5        # May
+    - 6        # Jun
+    - 7        # Jul
+    - 8        # Aug
+    - 9        # Sep
+    - 10       # Oct
+    - 11       # Nov
+    - 12       # Dec
+    
+  lr:          # Air temperature lapse rate (degC m^-1)
+    - 0.0044   # Jan
+    - 0.0059   # Feb
+    - 0.0071   # Mar
+    - 0.0078   # Apr
+    - 0.0081   # May
+    - 0.0082   # Jun
+    - 0.0081   # Jul
+    - 0.0081   # Aug
+    - 0.0077   # Sep
+    - 0.0068   # Oct
+    - 0.0055   # Nov
+    - 0.0047   # Dec 
+    
+  x:           # Precipitation adjustment factor (m^-1)
+    - 0.00035  # Jan
+    - 0.00035  # Feb
+    - 0.00035  # Mar
+    - 0.00030  # Apr
+    - 0.00025  # May
+    - 0.00020  # Jun
+    - 0.00020  # Jul
+    - 0.00020  # Aug
+    - 0.00020  # Sep
+    - 0.00025  # Oct
+    - 0.00030  # Nov
+    - 0.00035  # Dec
+
+#------------------------------------------
+# Decision tree booleans & thresholds
+#------------------------------------------
+decision_tree_settings:    # Stages & thresholds for the decision-tree-based gap-filling algorithm.
+
+  temperature: true        # If the previous day's snow cover was 1(0), and the current day's air temperature is <=0(>0), 
+                           # then the current day's sc will be 1(0).
+                           # Default: Keep always true.
+  FREEZING_TEMP: 0         # Default: 0 ........ Temperature threshold (degC) for simplistically differentiating between snow & rain.
+
+  modis: true              # If MODIS (Terra) snow cover is 1(0), then sc will be 1(0).
+                           # IMPORTANT: Set to 'true' only if the intended start date is on or after the '2000-02-24'.
+  MODIS_FSC_THRES: 50      # Default: 50 ....... Shen et al. (2025) https://doi.org/10.1109/TGRS.2025.3543433
+                           #          50 ....... Notarnicola (2018) https://doi.org/10.1016/j.rse.2020.111781
+                           # Alternative: 30 ... Gascoin et al. (2022) https://doi.org/10.1088/1748-9326/ac9e6a
+
+  sc_probab: true          # If the multi-year snow cover probability for that month is 1(0), then sc for that day will be 1(0).
+  SNOW_PROBAB_THRES: 1.0   # Default: 0.99 ..... Threshold for passive multiyear probability-based gap-filling in sm.reconstruct_daily()
+  
+#------------------------------------------
+# Machine learning settings
+#------------------------------------------
+classifiers:                          # Activate only one classifier. 
+                                      # More info on each classifier can be found on the Earth Engine documentation (links available).
+             
+  random_forest:                      # https://developers.google.com/earth-engine/apidocs/ee-classifier-smilerandomforest
+    active: true
+    settings:
+      outputMode: 'CLASSIFICATION'    # Options: 'CLASSIFICATION', 'REGRESSION'
+      classProperty: 'sc'             # Options: 'sc' ('CLASSIFICATION'), 'fsc' ('REGRESSION')
+      numberOfTrees: 30               # Default: 30
+      variablesPerSplit:              # Default: null
+      minLeafPopulation: 1            # Default: 1
+      bagFraction: 0.5                # Default: 0.5
+      maxNodes:                       # Default: null
+      seed: 0                         # Default: 0
+
+  gradient_tree_boost:                # https://developers.google.com/earth-engine/apidocs/ee-classifier-smilegradienttreeboost
+    active: false
+    settings:
+      outputMode: 'CLASSIFICATION'    # Options: 'CLASSIFICATION', 'REGRESSION'
+      classProperty: 'sc'             # Options: 'sc' ('CLASSIFICATION'), 'fsc' ('REGRESSION')
+      numberOfTrees: 30               # Default: 30
+      shrinkage: 0.005                # Default: 0.005
+      samplingRate: 0.7               # Default: 0.7
+      maxNodes:                       # Default: null
+      loss: 'LeastAbsoluteDeviation'  # Options ('REGRESSION'): 'LeastSquares', 'LeastAbsoluteDeviation', 'Huber'
+      seed: 0                         # Default: 0
+  
+  minimum_distance:                   # https://developers.google.com/earth-engine/apidocs/ee-classifier-minimumdistance
+    active: false
+    settings:
+      outputMode: 'CLASSIFICATION'    # Options: 'CLASSIFICATION', 'REGRESSION'
+      classProperty: 'sc'             # Options: 'sc' ('CLASSIFICATION'), 'fsc' ('REGRESSION')
+      metric: 'euclidean'             # Options: 'euclidean', 'cosine', 'mahalanobis', 'manhattan'
+      kNearest: 1                     # Default: 1
+  
+  cart:                               # https://developers.google.com/earth-engine/apidocs/ee-classifier-smilecart
+    active: false
+    settings:
+      outputMode: 'CLASSIFICATION'    # Options: 'CLASSIFICATION', 'REGRESSION'
+      classProperty: 'sc'             # Options: 'sc' ('CLASSIFICATION'), 'fsc' ('REGRESSION')
+      maxNodes:                       # Default: null
+      minLeafPopulation: 1            # Default: 1
+
+  k_nearest_neighbor:                 # https://developers.google.com/earth-engine/apidocs/ee-classifier-smileknn
+    active: false
+    settings:
+      outputMode: 'CLASSIFICATION'    # Options: 'CLASSIFICATION'
+      classProperty: 'sc'             # Options: 'sc' ('CLASSIFICATION'), 'fsc' ('REGRESSION')
+      k: 1                            # Default: 1
+      searchMethod: 'AUTO'            # Options: 'AUTO', 'LINEAR_SEARCH', 'KD_TREE', 'COVER_TREE'
+      metric: 'EUCLIDEAN'             # Options: 'EUCLIDEAN', 'MAHALANOBIS', 'MANHATTAN', 'BRAYCURTIS' 
+
+  naive_bayes:                        # https://developers.google.com/earth-engine/apidocs/ee-classifier-smilenaivebayes
+    active: false
+    settings:
+      outputMode: 'CLASSIFICATION'    # Options: 'CLASSIFICATION'
+      classProperty: 'sc'             # Options: 'sc' ('CLASSIFICATION'), 'fsc' ('REGRESSION')
+      lambda: 0.000001                # Default: 0.000001
+
+  support_vector_machine:             # https://developers.google.com/earth-engine/apidocs/ee-classifier-libsvm
+    active: false
+    settings:
+      outputMode: 'CLASSIFICATION'    # Options: 'CLASSIFICATION', 'REGRESSION' ('NU_SVR')
+      classProperty: 'sc'             # Options: 'sc' ('CLASSIFICATION'), 'fsc' ('REGRESSION')
+      decisionProcedure: 'Voting'     # Options: 'Voting', 'Margin'
+      svmType: 'C_SVC'                # Options: 'C_SVC', 'NU_SVC', 'ONE_CLASS', 'EPSILON_SVR', 'NU_SVR'
+      kernelType: 'LINEAR'            # Options: 'LINEAR', 'POLY', 'RBF', 'SIGMOID'
+      shrinking: true                 # Default: true
+      degree:                         # Default: null
+      gamma:                          # Default: null
+      coef0:                          # Default: null
+      cost:                           # Default: null
+      nu:                             # Default: null
+      terminationEpsilon:             # Default: null
+      lossEpsilon:                    # Default: null
+      oneClass:                       # Default: null
+  
+input_vars:                  # Variables to input for machine learning-based reconstruction
+  lat: false                 # Default: false
+  lon: false                 # Default: false
+  month: false               # Default: false
+  year: false                # Default: false
+  doy: false                 # Default: false
+  date: false                # Default: false
+  elev: false                # Default: false
+  slope: false               # Default: false
+  aspect: false              # Default: false
+  chili: true                # Default: true -----
+  mtpi: true                 # Default: true -----
+  landcover: false           # Default: false
+  sc_probab: true            # Default: true -----
+  t2mHres: true              # Default: true -----
+  precipHres: true           # Default: true -----
+  fscLres: false             # Default: false
+  hd: false                  # Default: false
+  cd: false                  # Default: false
+  hd_precip: false           # Default: false
+  cd_precip: false           # Default: false
+  sc_sum_prev: true          # Default: true -----
+  hd_sum_prev: true          # Default: true -----
+  cd_sum_prev: true          # Default: true -----
+  hd_precip_sum_prev: true   # Default: true -----
+  cd_precip_sum_prev: true   # Default: true -----
+
+output_vars:                 # Variables to output after reconstruction
+  sc: true                   # Default: true -----
+  sc_obs: false              # Default: false
+  flag_all: true             # Default: true -----
+  flag_dt: true              # Default: true -----
+  lat: false                 # Default: false
+  lon: false                 # Default: false
+  month: true                # Default: true -----
+  year: true                 # Default: true -----
+  doy: false                 # Default: false
+  date: false                # Default: false
+  elev: false                # Default: false
+  slope: false               # Default: false
+  aspect: false              # Default: false
+  chili: false               # Default: false
+  mtpi: false                # Default: false
+  landcover: false           # Default: false
+  sc_probab: false           # Default: false
+  t2mHres: false             # Default: false
+  precipHres: false          # Default: false
+  fscLres: false             # Default: false
+  hd: false                  # Default: false
+  cd: false                  # Default: false
+  hd_precip: false           # Default: false
+  cd_precip: false           # Default: false
+  sc_sum_prev: false         # Default: false
+  hd_sum_prev: false         # Default: false
+  cd_sum_prev: false         # Default: false
+  hd_precip_sum_prev: false  # Default: false
+  cd_precip_sum_prev: false  # Default: false
+  tp: true                   # Default: true -----
+  tn: true                   # Default: true -----
+  fp: true                   # Default: true -----
+  fn: true                   # Default: true -----
