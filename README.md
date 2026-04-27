@@ -1,7 +1,7 @@
 # snowMapper ❄️🏔️🛰️🗺️ *(...Coming 30 April 2026!)*
 
 [![Journal: The Cryosphere](https://img.shields.io/badge/Journal-The_Cryosphere-teal.svg)](https://doi.org/10.5194/tc-20-2209-2026)
-[![EGU Preprint](https://img.shields.io/badge/EGUsphere-Preprint-white.svg)]([https://doi.org/10.5194/tc-20-2209-2026](https://egusphere.copernicus.org/preprints/2026/egusphere-2026-327/))
+[![EGU Preprint](https://img.shields.io/badge/EGUsphere-Preprint-white.svg)](https://egusphere.copernicus.org/preprints/2026/egusphere-2026-327/)
 [![DOI](https://img.shields.io/badge/DOI-10.5281/zenodo.17663731-blue.svg)](https://doi.org/10.5281/zenodo.17663731)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
