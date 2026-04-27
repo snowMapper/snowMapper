@@ -1,4 +1,4 @@
-# snowMapper ❄️🏔️🛰️🗺️ *(...Coming 30 April 2026!)*
+# snowMapper ❄️🏔️🛰️🗺️
 
 [![Journal: The Cryosphere](https://img.shields.io/badge/Journal-The_Cryosphere-teal.svg)](https://doi.org/10.5194/tc-20-2209-2026)
 [![EGU Preprint](https://img.shields.io/badge/EGUsphere-Preprint-white.svg)](https://egusphere.copernicus.org/preprints/2026/egusphere-2026-327/)
