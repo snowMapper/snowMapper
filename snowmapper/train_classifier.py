@@ -18,6 +18,7 @@ Input parameters:
 - active_classifier (str): Classifier that has been selected in the configuration file 
                            for the reconstruction.
 - classifier_path (str): Path where EE classifier asset will be stored.
+- input_vars (list): List of variables to be used as predictors for the PIML classifier.
 
 Internal functions:
 - register_method(): Finds the classifier that needs to be applied.

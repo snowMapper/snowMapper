@@ -6,15 +6,13 @@ _____________________________________________
 
 __________________________________________________________________________________________
 Description: 
-Gap-fills data on the first 'initial state' image. Currently, the random forest option is 
-deactivated, and all gaps are filled with no-snow values.
+Gap-fills data on the 'initial state' image. All gaps are filled with no-snow values.
 
 Input parameters:
 - collection (ee.ImageCollection): Image collection with metadata.
 - domain_ee (ee.Feature): Region of interest (e.g. mountain range).
-- START_MONTH (int): The first month of the preprocessed image collection, which will be
-                     composited and used as an initial state for subsequent snow cover
-                     gap-filling and reconstructing routines.
+- initialisation_date (str): Initialisation ('%Y-%m-%d') 1 day before the start-date.
+- start_date (str): Start-date of the season ('%Y-%m-%d').
 
 Internal functions:
 - obs_img(): Replace the empty 'sc' with the 'sc_obs'.
@@ -40,9 +38,7 @@ ee.Initialize()
 #===============================================================================
 # Gap-fill first binary snow image to use for spin-up
 #===============================================================================
-def initial_state(collection, domain_ee, START_MONTH):
-
-    img = collection.first()  # This is the initialisation image
+def initial_state(collection, domain_ee, initialisation_date, start_date):
     
     #------------------------------------------
     # Replace 'sc' band with available 'sc_obs' band
@@ -91,12 +87,11 @@ def initial_state(collection, domain_ee, START_MONTH):
     #------------------------------------------
     # Apply the above
     #------------------------------------------
-    filtered_col = collection.filter(ee.Filter.calendarRange(START_MONTH, START_MONTH, 'month').Not())
-
+    img = collection.first()  # Initialisation image
+    post_initialisation_col = ee.ImageCollection(collection.filter(ee.Filter.date(initialisation_date, start_date).Not()))
     updated_img = obs_img(img)
-    gapfilled_img = gapfill_img(updated_img)
-    gapfilled_img = starting_vars(gapfilled_img)
-
-    updated_col = filtered_col.merge(ee.ImageCollection([gapfilled_img]))
+    updated_img = gapfill_img(updated_img)
+    updated_img = starting_vars(updated_img)
+    updated_col = post_initialisation_col.merge(ee.ImageCollection([updated_img]))
     
     return ee.ImageCollection(updated_col).sort('system:time_start')

@@ -10,14 +10,14 @@ Builds the training dataset from individual station files, applies snow-phase lo
 stratified sampling, attaches climate variables, generates histograms, and saves as CSV.
 
 Input parameters:
--- stations_ee (ee.Feature.Collection): Earth Engine Feature Collection of 'stations.csv'.
--- output_dir (str): Path of folder where processed station files are stored.
--- sample_size (int): Number of datapoints to be sampled in the dataset.
--- output_root (str): Path where the final dataset will be stored.
--- months_list (list): List of months of in the configuration timeframe.
+- stations_ee (ee.Feature.Collection): Earth Engine Feature Collection of 'stations.csv'.
+- output_dir (str): Path of folder where processed station files are stored.
+- sample_size (int): Number of datapoints to be sampled in the dataset.
+- output_root (str): Path where the final dataset will be stored.
+- months_list (list): List of months of in the configuration timeframe.
 - SC_THRES (int): Theshold for conferting snow depth (cm) to bianry snow cover.
--- CRS (str): Desired CRS of grid.
--- SCALE (int): Desired scale of grid.
+- CRS (str): Desired CRS of grid.
+- SCALE (int): Desired scale of grid.
 
 Internal functions:
 - gap_filter(): 
@@ -46,7 +46,7 @@ ee.Authenticate()
 ee.Initialize()
 
 #===============================================================================
-# 
+# Train dataset
 #===============================================================================
 def train_dataset(output_dir, stations_ee, sample_size, CRS, SCALE,
                   months_list, SC_THRES, output_root, sc_probab_col,

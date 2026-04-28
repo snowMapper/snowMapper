@@ -5,12 +5,14 @@ from .read_config import read_config                   # OPERATIONAL #
 from .create_mask import create_mask                   # OPERATIONAL #
 from .preprocess import preprocess                     # OPERATIONAL #
 from .daily_composites import daily_composites         # OPERATIONAL #
-from .set_first import set_first                       # OPERATIONAL #
 from .binary_snow import binary_snow                   # OPERATIONAL # 
 from .sc_probabilities import sc_probabilities         # OPERATIONAL #
 from .img_synth import img_synth                       # OPERATIONAL #
 from .add_metadata import add_metadata                 # OPERATIONAL # 
-from .initial_state import initial_state               # OPERATIONAL #
+from .initial_state import initial_state               # -> update   # I've updated this, but what about the predictor vars?
+                                                       #             # They probably haven't been added, so we need to re-add
+                                                       #             # them, and replace them if they exist. Check relevant
+                                                       #             # modules. Also, adapt config.yml and sm.read_config().
 from .process_stations import process_stations         # OPERATIONAL #
 from .train_dataset import train_dataset               # OPERATIONAL #
 from .train_classifier import train_classifier         # OPERATIONAL #
@@ -27,7 +29,6 @@ __all__ = [
   'create_mask',
   'preprocess',
   'daily_composites',
-  'set_first',
   'binary_snow',
   'sc_probabilities',
   'img_synth',

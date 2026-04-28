@@ -14,8 +14,8 @@ gapfilling and reconstruction algorithms to be then performed.
 Input parameters:
 - collection (ee.ImageCollection): Preprocessed image collection.
 - domain_ee (ee.FeatureCollection): Region of interest (e.g. mountain range).
-- start_date (ee.Date): Start-date of the season.
-- end_date (ee.Date): End-date of the season.
+- initialisation_date (str): Initialisation ('%Y-%m-%d') 1 day before the start-date.
+- end_date (str): End-date of the season ('%Y-%m-%d').
 
 Internal functions:
 - synthesise(): Creates synthetic images for days within the timeframe when no images 
@@ -32,8 +32,6 @@ ________________________________________________________________________________
 # Load libraries
 #===============================================================================
 import ee
-from datetime import datetime, timedelta
-from dateutil.relativedelta import relativedelta
 
 #===============================================================================
 # Get Earth Engine started
@@ -44,16 +42,13 @@ ee.Initialize()
 #===============================================================================
 # Image synthesis
 #===============================================================================
-def img_synth(collection, domain_ee, start_date, end_date):
+def img_synth(collection, domain_ee, initialisation_date, end_date):
     
     #------------------------------------------
     # Prerequisites for synthesise()
     #------------------------------------------
-    # Recalculate start_date based on the output of set_first (e.g. 31 August)
-    start_date = (datetime.strptime(start_date, "%Y-%m-%d") + relativedelta(months=1) - timedelta(days=1)).strftime("%Y-%m-%d")
-    
     # Ensure start_date is earlier than end_date by comparing ee.Date objects
-    ordered_dates = sorted([start_date, end_date])
+    ordered_dates = sorted([initialisation_date, end_date])
     start_date_ee = ee.Date(ordered_dates[0])
     end_date_ee = ee.Date(ordered_dates[1])
     

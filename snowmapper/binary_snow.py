@@ -12,8 +12,8 @@ Input parameters:
 - thresholds (dict): Thresholds for the snow cover mapping approaches.
 - active_method (str): Method that has been selected in the configuration file for
                        binarising snow.
+- domain_ee (ee.FeatureCollection): Region of interest.
 - SCALE (int): Desired scale of grid.
-- domain_ee (ee.FeatureCollection): Region of interest (e.g. mountain range).
 
 Internal functions:
 - register_method(): Finds the method that needs to be applied.
@@ -53,9 +53,8 @@ def register_method(name):
 @register_method("ndsi")
 def method_ndsi(img, thresholds, domain_ee=None, SCALE=None):
     ndsi = img.normalizedDifference(["green", "swir1"])  # Normalised Difference Snow Index
-    ndsi_condition = ndsi.gt(thresholds["NDSI_THRES"])
+    sc_obs = ndsi.gt(thresholds["NDSI_THRES"])
     
-    sc_obs = ndsi_condition
     return img.addBands(sc_obs.rename("sc_obs")).select("sc_obs").toUint8().copyProperties(img, ["system:time_start"])
 
 #===============================================================================
@@ -69,56 +68,39 @@ def method_otsu_ndsi(img, thresholds, domain_ee, SCALE):
     # Otsu threshold function
     # -----------------------------
     def otsu(hist_dict):
-        counts = ee.List(hist_dict.get('histogram'))
-        means = ee.List(hist_dict.get('bucketMeans'))
+        counts = ee.Array(ee.List(hist_dict.get('histogram')))
+        means = ee.Array(ee.List(hist_dict.get('bucketMeans')))
     
-        size = counts.length()
-        total = ee.Number(counts.reduce(ee.Reducer.sum()))
+        total = counts.accum(0).get([-1])
+        sum_total = counts.multiply(means).accum(0).get([-1])
     
-        # total mean
-        sum_ = ee.Number(
-            ee.List(means.zip(counts)).map(
-                lambda x: ee.Number(ee.List(x).get(0))
-                .multiply(ee.Number(ee.List(x).get(1)))
-            ).reduce(ee.Reducer.sum())
+        counts_cum = counts.accum(0)
+        sums_cum = counts.multiply(means).accum(0)
+    
+        size = counts.length().get([0])
+        
+        total_arr = ee.Array([total]).repeat(0, size)
+        sum_total_arr = ee.Array([sum_total]).repeat(0, size)
+        
+        # weights
+        w1 = counts_cum.divide(total)
+        ones = ee.Array([1]).repeat(0, size)
+        w2 = ones.subtract(w1)
+        
+        # means
+        mu1 = sums_cum.divide(counts_cum.max(1))
+        
+        mu2 = sum_total_arr.subtract(sums_cum).divide(
+            total_arr.subtract(counts_cum).max(1)
         )
     
-        indices = ee.List.sequence(1, size.subtract(1))
+        # between-class variance
+        bss = w1.multiply(w2).multiply(mu1.subtract(mu2).pow(2))
+        bss_clipped = bss.slice(0, 0, -1)
     
-        def bss_func(i):
-            i = ee.Number(i)
+        idx = bss_clipped.argmax()
     
-            counts1 = counts.slice(0, i)
-            counts2 = counts.slice(i)
-    
-            means1 = means.slice(0, i)
-            means2 = means.slice(i)
-    
-            w1 = ee.Number(counts1.reduce(ee.Reducer.sum())).divide(total)
-            w2 = ee.Number(1).subtract(w1)
-    
-            mu1 = ee.Number(
-                ee.List(means1.zip(counts1)).map(
-                    lambda x: ee.Number(ee.List(x).get(0))
-                    .multiply(ee.Number(ee.List(x).get(1)))
-                ).reduce(ee.Reducer.sum())
-            ).divide(ee.Number(counts1.reduce(ee.Reducer.sum())))
-    
-            mu2 = ee.Number(
-                ee.List(means2.zip(counts2)).map(
-                    lambda x: ee.Number(ee.List(x).get(0))
-                    .multiply(ee.Number(ee.List(x).get(1)))
-                ).reduce(ee.Reducer.sum())
-            ).divide(ee.Number(counts2.reduce(ee.Reducer.sum())))
-    
-            return w1.multiply(w2).multiply(mu1.subtract(mu2).pow(2))
-    
-        bss = indices.map(bss_func)
-    
-        maxval = ee.Number(bss.reduce(ee.Reducer.max()))
-        idx = bss.indexOf(maxval)
-    
-        return ee.Number(means.get(idx))
+        return means.get(idx)
 
     # -----------------------------
     # Compute histogram
@@ -127,17 +109,47 @@ def method_otsu_ndsi(img, thresholds, domain_ee, SCALE):
         reducer=ee.Reducer.histogram(maxBuckets=256),
         geometry=domain_ee,
         scale=SCALE,
-        bestEffort=True
+        bestEffort=True,
+        # tileScale=16
     )
+    
     hist_dict = ee.Dictionary(hist.get('NDSI'))
     
     # -----------------------------
     # Calculate & apply optimised NDSI threshold
     # -----------------------------    
-    otsu_ndsi_thres = otsu(hist_dict)
-    ndsi_condition = ndsi.gt(ee.Image.constant(otsu_ndsi_thres))
+    # Create a safe dictionary to prevent otsu() from failing on null data
+    # If the histogram is missing, we use a dummy one where the result will be ignored
+    safe_dict = ee.Dictionary(ee.Algorithms.If(
+        hist_dict.contains('histogram'),
+        hist_dict,
+        ee.Dictionary({'histogram': [1, 1], 'bucketMeans': [0, 0.4]})
+    ))
     
-    sc_obs = ndsi_condition
+    # Calculate threshold
+    otsu_thres = otsu(safe_dict)
+    
+    # Use the calculated threshold IF data existed, else fallback to 0.4
+    final_thres = ee.Number(ee.Algorithms.If(hist_dict.contains('histogram'), otsu_thres, 0.4))
+    
+    sc_obs = ndsi.gt(ee.Image.constant(final_thres))
+    return img.addBands(sc_obs.rename("sc_obs")).select("sc_obs").toUint8().copyProperties(img, ["system:time_start"])
+
+#===============================================================================
+# Method: Clustering NDSI
+#===============================================================================
+@register_method("Clustering_ndsi")
+def method_clustering_ndsi(img, thresholds, domain_ee, SCALE):
+    ndsi = img.normalizedDifference(["green", "swir1"])  # Normalised Difference Snow Index
+        
+    # Make the training dataset.
+    training = ndsi.sample(region=domain_ee, scale=SCALE, numPixels=thresholds["TRAINING_SAMPLE"])
+    
+    # Instantiate the clusterer and train it.
+    clusterer = ee.Clusterer.wekaKMeans(2).train(training)
+    
+    # Cluster the input using the trained clusterer.
+    sc_obs = ndsi.cluster(clusterer)
     return img.addBands(sc_obs.rename("sc_obs")).select("sc_obs").toUint8().copyProperties(img, ["system:time_start"])
 
 #===============================================================================
@@ -222,14 +234,14 @@ def method_wang_2025(img, thresholds, domain_ee=None, SCALE=None):
     # Terrain data
     dem = ee.Image("USGS/SRTMGL1_003")
     terrain = ee.Algorithms.Terrain(dem)
-    slope = terrain.select("slope").multiply(math.pi / 180)    # radians
-    aspect = terrain.select("aspect").multiply(math.pi / 180)  # radians
+    slope = terrain.select("slope").multiply(math.pi/180)    # radians
+    aspect = terrain.select("aspect").multiply(math.pi/180)  # radians
 
     # Solar angles from metadata
     zenith_deg = ee.Number(img.get("SUN_ZENITH"))
     azimuth_deg = ee.Number(img.get("SUN_AZIMUTH"))
-    zenith_rad = zenith_deg.multiply(math.pi / 180)
-    azimuth_rad = azimuth_deg.multiply(math.pi / 180)
+    zenith_rad = zenith_deg.multiply(math.pi/180)
+    azimuth_rad = azimuth_deg.multiply(math.pi/180)
 
     # Convert to constant images for pixelwise operations
     zenith_img = ee.Image.constant(zenith_rad)
@@ -241,7 +253,7 @@ def method_wang_2025(img, thresholds, domain_ee=None, SCALE=None):
                   .add(zenith_img.sin().multiply(slope.sin()).multiply((aspect.subtract(azimuth_img)).cos()))
     )
     incidence_angle_rad = cos_i.acos()
-    incidence_angle_deg = incidence_angle_rad.multiply(180 / math.pi)
+    incidence_angle_deg = incidence_angle_rad.multiply(180/math.pi)
 
     # Shadow mask
     shadow = ee.Terrain.hillShadow(

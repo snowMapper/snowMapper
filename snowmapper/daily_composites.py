@@ -48,8 +48,11 @@ def daily_composites(collection):
         
         # Use median across images of the same day
         composite_img = daily_imgs.median().set({
-            'system:time_start': date.millis()
+            'system:time_start': date.millis(),
+            'SUN_ZENITH': daily_imgs.aggregate_mean('SUN_ZENITH'),
+            'SUN_AZIMUTH': daily_imgs.aggregate_mean('SUN_AZIMUTH')
         })
+        
         return composite_img
     
     # Map over the dates to compute daily averages

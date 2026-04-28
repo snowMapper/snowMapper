@@ -13,8 +13,8 @@ previous day's snow cover state to inform the current day's variables and recons
 
 Input parameters:
 - collection (ee.ImageCollection): Images with metadata.
-- START_MONTH(int): The month of the initialisation image for which snow cover and
-                    initial parameters have been set in sm.gapfill_first(). 
+- initialisation_date (str): Initialisation ('%Y-%m-%d') 1 day before the start-date.
+- start_date (str): Start-date of the season ('%Y-%m-%d').
 - classifier (classifier): The random forest classifier developed in sm.train_classifier().
 - decision_tree_settings (dict): Contains booleans and thresholds for decision tree-based 
                                  gap-filling.
@@ -52,10 +52,11 @@ ee.Initialize()
 #===============================================================================
 # Reconstruct all binary snow images
 #===============================================================================
-def reconstruct_daily(collection, START_MONTH, decision_tree_settings, classifier, input_vars, output_vars):
+def reconstruct_daily(collection, initialisation_date, start_date, decision_tree_settings, classifier, input_vars, output_vars):
 
-    init_img = ee.Image(collection.first())
-    post_init_col = ee.ImageCollection(collection.filter(ee.Filter.calendarRange(START_MONTH, START_MONTH, 'month').Not()))
+    initialisation_img = ee.Image(collection.first())
+    post_initialisation_col = ee.ImageCollection(collection.filter(ee.Filter.date(initialisation_date, start_date).Not()))
+    # post_initialisation_col = ee.ImageCollection(collection.filter(ee.Filter.calendarRange(START_MONTH, START_MONTH, 'month').Not()))
 
     #------------------------------------------
     # Prepare for reconstruction iteration
@@ -256,10 +257,10 @@ def reconstruct_daily(collection, START_MONTH, decision_tree_settings, classifie
     # Run iteration
     #------------------------------------------
     reconstructed_col = ee.List(
-        post_init_col.iterate(
-            lambda img, init_img:
-            reconstruct_img(img, init_img, decision_tree_settings, classifier, input_vars),  # This is the function to pass to iterate().
-            ee.List([init_img])                                                              # This is the initial state image.
+        post_initialisation_col.iterate(
+            lambda img, initialisation_img:
+            reconstruct_img(img, initialisation_img, decision_tree_settings, classifier, input_vars),  # This is the function to pass to iterate().
+            ee.List([initialisation_img])                                                              # This is the initial state image.
         )
     )
 

@@ -12,9 +12,9 @@ select images from one specific sensor at a time (from the ones inputed in confi
 to then apply the relavant preprocessing function.
 
 Input parameters:
-- domain_ee (ee.FeatureCollection): Region of interest (e.g. mountain range).
-- start_date (ee.Date): Start-date of the season.
-- end_date (ee.Date): End-date of the season.
+- domain_ee (ee.FeatureCollection): Region of interest.
+- start_date (str): Start-date of the season ('%Y-%m-%d').
+- end_date (str): End-date of the season ('%Y-%m-%d').
 - months_list (list): List of months included in the configured reconstruction timeframe.
 - missions (dict): Dictionary of booleans, defining the selected missions to be used.
 

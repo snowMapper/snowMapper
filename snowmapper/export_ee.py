@@ -18,9 +18,6 @@ Input parameters:
 - SCALE (int): Desired scale of grid.
 - CRS_TRANSFORM (str): CRS transform for that domain.
 
-Internal functions:
--
-
 Output:
 - ee.ImageCollection asset saved.
 __________________________________________________________________________________________
