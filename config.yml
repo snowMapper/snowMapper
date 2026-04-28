@@ -231,7 +231,7 @@ decision_tree_settings:    # Stages & thresholds for the decision-tree-based gap
                            # Default: Keep always true.
   FREEZING_TEMP: 0         # Default: 0 ........ Temperature threshold (degC) for simplistically differentiating between snow & rain.
 
-  modis: true              # If MODIS (Terra) snow cover is 1(0), then sc will be 1(0).
+  modis: false             # If MODIS (Terra) snow cover is 1(0), then sc will be 1(0).
                            # IMPORTANT: Set to 'true' only if the intended start date is on or after the '2000-02-24'.
   MODIS_FSC_THRES: 50      # Default: 50 ....... Shen et al. (2025) https://doi.org/10.1109/TGRS.2025.3543433
                            #          50 ....... Notarnicola (2018) https://doi.org/10.1016/j.rse.2020.111781
