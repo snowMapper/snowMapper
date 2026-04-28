@@ -45,9 +45,10 @@ def read_config(config_file):
     
     # Ensure the config file exists
     if not os.path.exists(config_file):
-        raise FileNotFoundError(f"The configuration file {config_file} was not found.")
+        raise FileNotFoundError(f"Configuration file {config_file} not found")
     
     # Load YAML configuration file into a dictionary
+    print(f" --- START -- Configuring snowMappar settings...")
     with open(config_file, 'r') as file:
         cfg = yaml.safe_load(file)
 
@@ -63,10 +64,10 @@ def read_config(config_file):
     # Geographic parameters
     #------------------------------------------------------------------------------------------------------------------------------
     config_data['SCALE'] = cfg.get('SCALE')
-    print(f"Spatial resolution: {config_data['SCALE']}")
+    print(f"              Spatial resolution: {config_data['SCALE']}")
     
     config_data['CRS'] = cfg.get('CRS')
-    print(f"CRS: {config_data['CRS']}")
+    print(f"              CRS: {config_data['CRS']}")
 
     #------------------------------------------------------------------------------------------------------------------------------
     # Domain & subdomain shapefiles
@@ -76,7 +77,8 @@ def read_config(config_file):
         config_data['roi_path'] = cfg.get('custom_path_name')
     else:
         config_data['roi_path'] = re.sub(r'\s+', '_', config_data['roi_name'].strip().lower())
-    print(f"ROI name: {config_data['roi_name']}\nROI path: {config_data['roi_path']}")
+    print(f"              ROI name: {config_data['roi_name']}")
+    print(f"              ROI path: {config_data['roi_path']}")
 
     # Check if EE folders exist and create if not
     def asset_exists(asset_id):
@@ -88,7 +90,7 @@ def read_config(config_file):
     
     def ensure_folder(path):
         if not asset_exists(path):
-            print('Creating folder:', path)
+            print('              Creating folder:', path)
             ee.data.createFolder(path)
     
     root = f"projects/{config_data['ee_project']}/assets/"
@@ -245,9 +247,9 @@ def read_config(config_file):
     config_data['START_YEAR'] = start_year
     config_data['END_YEAR'] = end_year
 
-    print(f"Start date: {config_data['start_date']}")
-    print(f"End date: {config_data['end_date']}")
-    print(f"Daily meteo aggregation time: {config_data['START_HOUR']}:00")
+    print(f"              Start date: {config_data['start_date']}")
+    print(f"              End date: {config_data['end_date']}")
+    print(f"              Daily meteo aggregation time: {config_data['START_HOUR']}:00")
     
     # BUILD SNOW COVER PROBABILITY CALCULATION TIMEFRAME
     # Build start date
@@ -309,7 +311,9 @@ def read_config(config_file):
     config_data['active_method'] = active_method
     config_data['thresholds'] = thresholds
 
-    print(f"Snow mapping method: {config_data['active_method']}")
+    print(f"              Snow mapping method: {config_data['active_method']}")
+    if active_method == 'Otsu_ndsi' or active_method == 'Clustering_ndsi':
+        print(f"-- WARNING -- {config_data['active_method']} is not yet fully operational")
 
     #------------------------------------------------------------------------------------------------------------------------------
     # Decision tree booleans & thresholds
@@ -423,7 +427,7 @@ def read_config(config_file):
     precipitation_units = precipitation.get('units')
 
     if config_data['meteo_format'] == 'ee':
-        print('Retrieving meteo from Earth Engine Data/Community Catalog...')
+        print('              Retrieving meteo from Earth Engine Data/Community Catalog...')
         meteo = (
             ee.ImageCollection(meteo.get('meteo_dir'))
             .filterDate(
@@ -436,14 +440,14 @@ def read_config(config_file):
             )
 
         )
-        print('Corresponding Earth Engine meteo assets have been found')
+        print('              Corresponding Earth Engine meteo assets have been found')
 
         # Convert temperature units
         if temperature_units == 'C':
             meteo_t2m = meteo.select('t2m')
             # pass
         elif temperature_units == 'K':
-            print("Converting temperature units to '℃'...")
+            print("              Converting temperature units to '℃'...")
             meteo_t2m = meteo.select('t2m').map(
                 lambda img: img.select('t2m')
                                .subtract(ee.Image.constant(273.15))
@@ -457,7 +461,7 @@ def read_config(config_file):
             meteo_precip = meteo.select('precip')
             # pass
         elif precipitation_units == 'm':
-            print("Converting precipitation units to 'mm'...")
+            print("              Converting precipitation units to 'mm'...")
             meteo_precip = meteo.select('precip').map(
                 lambda img: img.select('precip')
                                .multiply(ee.Image.constant(1000))
@@ -467,11 +471,11 @@ def read_config(config_file):
             raise ValueError('Cannot process precipitation: please provide in millimetres or metres')
 
         config_data['meteo'] = ee.ImageCollection(meteo_t2m.combine(meteo_precip))
-        print("Meteo preprocessing successful")
+        print('              Meteo preprocessing successful')
     
     elif config_data['meteo_format'] == 'nc':
-        print('Retrieving meteo from local drive...')
-        print('Checking if already uploaded as Earth Engine assets...')
+        print('              Retrieving meteo from local drive...')
+        print('              Checking if already uploaded as Earth Engine assets...')
         try:
             # Earth Engine paths were data is meant to be stored
             meteo_t2m_ee_path = root + f"snowMapper/{config_data['roi_path']}/meteo_t2m_{config_data['initialisation_date']}_{config_data['end_date']}"
@@ -481,11 +485,11 @@ def read_config(config_file):
             ee.data.getAsset(meteo_precip_ee_path)
             
             config_data['meteo'] = ''
-            print("Corresponding Earth Engine meteo assets have been found")
+            print('              Corresponding Earth Engine meteo assets have been found')
         
         except ee.EEException:
-            print("No corresponding Earth Engine meteo assets were found")
-            print("Preprocessing netCDF meteo files...")
+            print('              No corresponding Earth Engine meteo assets were found')
+            print('              Preprocessing netCDF meteo files...')
                          
             # Open and prepare dataset
             ds = xr.open_dataset(meteo.get('meteo_dir'), engine='netcdf4')
@@ -523,7 +527,7 @@ def read_config(config_file):
             if temperature_units == 'C':
                 pass
             elif temperature_units == 'K':
-                print("Converting temperature units to '℃'...")
+                print("              Converting temperature units to '℃'...")
                 ds_daily['t2m'] = ds_daily['t2m'] - 273.15
             else:
                 raise ValueError('Cannot process temperature: please provide in Celcius or Kelvin')
@@ -532,18 +536,18 @@ def read_config(config_file):
             if precipitation_units == 'mm':
                 pass
             elif precipitation_units == 'm':
-                print("Converting precipitation units to 'mm'...")
+                print("              Converting precipitation units to 'mm'...")
                 ds_daily['precip'] = ds_daily['precip'] * 1000
             else:
                 raise ValueError('Cannot process precipitation: please provide in millimetres or metres')
             
             # Shift time back
             ds_daily = ds_daily.assign_coords(time=ds_daily.time + pd.Timedelta(hours=start_hour))
-            print("Meteo preprocessing successful")
+            print("              Meteo preprocessing successful")
                 
             # Save
             ds_daily.to_netcdf(os.path.join(out_dir_nc, f"meteo_{config_data['initialisation_date']}_{config_data['end_date']}.nc"))
-            print(f"Saved: meteo_{config_data['initialisation_date']}_{config_data['end_date']}.nc under '{out_dir_nc}'")
+            print(f"              Saved: meteo_{config_data['initialisation_date']}_{config_data['end_date']}.nc under '{out_dir_nc}'")
     
             # Output directory
             out_dir_tif = './input_data/meteo/geotif'
@@ -581,7 +585,7 @@ def read_config(config_file):
             precip_assetId = f"meteo_precip_{config_data['initialisation_date']}_{config_data['end_date']}"
             save_multiband(ds_daily, 't2m', os.path.join(out_dir_tif, t2m_assetId + '.tif'))
             save_multiband(ds_daily, 'precip', os.path.join(out_dir_tif, precip_assetId + '.tif'))
-            print(f"Saved: meteo_{config_data['initialisation_date']}_{config_data['end_date']}.tif under '{out_dir_tif}'")
+            print(f"              Saved: meteo_{config_data['initialisation_date']}_{config_data['end_date']}.tif under '{out_dir_tif}'")
         
             # # Convert xarray to ee.Image
             # def xarray_to_ee_image(ds, var_name):
@@ -613,7 +617,7 @@ def read_config(config_file):
             #         maxPixels=1e13
             #     )
             #     task.start()
-            #     print(f"{asset_id.split('/')[-1]} upload started")
+            #     print(f"              {asset_id.split('/')[-1]} upload started")
             #     return task
             
             
@@ -638,7 +642,7 @@ def read_config(config_file):
             # MAX_ELEMENTS = 5e7  # adjust if needed (~50M elements)
             
             # if n_elements < MAX_ELEMENTS:
-            #     print(f"Meteo dataset size OK for automatic upload ({n_elements:.2e} elements)")
+            #     print(f"              Meteo dataset size OK for automatic upload ({n_elements:.2e} elements)")
             
             #     # Convert xarray to ee.Image
             #     t2m_ee = xarray_to_ee_image(ds_daily, 't2m')
@@ -653,16 +657,16 @@ def read_config(config_file):
             #     tasks = [export_to_ee(img, desc, aid, config_data) for img, desc, aid in exports]
             
             #     # Wait loop
-            #     print("Meteo files: uploading to Earth Engine...")
+            #     print("              Meteo files: uploading to Earth Engine...")
             
             #     while True:
             #         ready = [asset_exists(aid) for _, _, aid in exports]
                     
             #         if all(ready):
-            #             print(f"Meteo files successfully uploaded at {roi_folder}")
+            #             print(f"              Meteo files successfully uploaded at {roi_folder}")
             #             break
                     
-            #         print("Meteo files: uploading to Earth Engine...")
+            #         print("              Meteo files: uploading to Earth Engine...")
             #         time.sleep(20)
             
             # else:
@@ -690,7 +694,7 @@ def read_config(config_file):
         or config_data['masks']['forest']
         or config_data['masks']['urban']
     ):
-        print('IMPORTANT: No masks, other than the domain (default), have been selected.')
+        print('              IMPORTANT: No masks, other than the domain (default), have been selected.')
     
     #------------------------------------------------------------------------------------------------------------------------------
     # Machine learning settings
@@ -718,4 +722,5 @@ def read_config(config_file):
     config_data['input_vars'] = [k for k, v in cfg['input_vars'].items() if v]
     config_data['output_vars'] = [k for k, v in cfg['output_vars'].items() if v]
     
+    print(f" --- DONE --- Configuration successfully passed!")
     return config_data

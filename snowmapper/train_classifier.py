@@ -103,26 +103,6 @@ def classifier_gradient_tree_boost(training_ee, settings, input_vars):
     return trained_classifier
 
 #===============================================================================
-# Method: Minimum Distance
-#===============================================================================
-@register_classifier("minimum_distance")
-def classifier_minimum_distance(training_ee, settings, input_vars):
-    trained_classifier = (
-        ee.Classifier
-          .minimumDistance(
-              settings['metric'], 
-              settings['kNearest']
-          )
-          .setOutputMode(settings['outputMode'])
-          .train(
-              features = training_ee,
-              classProperty = settings['classProperty'],
-              inputProperties = input_vars
-          )
-    )
-    return trained_classifier
-
-#===============================================================================
 # Method: Classification and Regression Trees (CART)
 #===============================================================================
 @register_classifier("cart")

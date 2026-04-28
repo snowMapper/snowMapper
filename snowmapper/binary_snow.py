@@ -136,18 +136,18 @@ def method_otsu_ndsi(img, thresholds, domain_ee, SCALE):
     return img.addBands(sc_obs.rename("sc_obs")).select("sc_obs").toUint8().copyProperties(img, ["system:time_start"])
 
 #===============================================================================
-# Method: Clustering NDSI
+# Method: Clustering NDSI <-- Not yet operational
 #===============================================================================
 @register_method("Clustering_ndsi")
 def method_clustering_ndsi(img, thresholds, domain_ee, SCALE):
     ndsi = img.normalizedDifference(["green", "swir1"])  # Normalised Difference Snow Index
-        
+
     # Make the training dataset.
     training = ndsi.sample(region=domain_ee, scale=SCALE, numPixels=thresholds["TRAINING_SAMPLE"])
-    
+
     # Instantiate the clusterer and train it.
     clusterer = ee.Clusterer.wekaKMeans(2).train(training)
-    
+
     # Cluster the input using the trained clusterer.
     sc_obs = ndsi.cluster(clusterer)
     return img.addBands(sc_obs.rename("sc_obs")).select("sc_obs").toUint8().copyProperties(img, ["system:time_start"])
