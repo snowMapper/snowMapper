@@ -1,7 +1,7 @@
 #------------------------------------------
 # Output folder
 #------------------------------------------
-ee_project: 'ee-kalexopoulos'
+ee_project: '<YOUR_EE_PROJECT_NAME>'
 
 #------------------------------------------
 # Output CRS & scale (meters)
@@ -19,8 +19,8 @@ SCALE: 100        # Default: 100
 #                                         - SHP (will be converted to EE asset internally) -> should be stored under './input_data/roi/<filename>'
 domain_path: 'projects/snowmapper/assets/test_domain'  
 subdomain_path: 'projects/snowmapper/assets/test_domain'
-roi_name: 'Mount Olympus'  # Name of ROI domain in 'MapName' field - same for both domain and subdomain.
-custom_path_name: 'mount_olympus_hres'          # May leave blank - otherwise populate with string similar to roi_name but without spaces (e.g. 'mount_olympus')
+roi_name: 'Mount Olympus'  # Name of ROI domain in 'MapName' field - same for both domain and subdomain (e.g. 'Mount Olympus').
+custom_path_name:          # May leave blank - otherwise populate with string similar to roi_name but without spaces (e.g. 'mount_olympus')
 
 #------------------------------------------
 # Training data
@@ -40,7 +40,7 @@ SC_THRES: 1                                                             # Option
                                                                         #             Sadeghi et al. (2025) https://doi.org/10.1002/joc.8780
                                                                         #             Notarnicola (2020) https://doi.org/10.1016/j.rse.2020.111781
 
-output_root: './input_data /training/'                                  # Root directory where folder will be automatically created (suffix '*_SD{SC_THRES}'),
+output_root: './input_data/training/'                                   # Root directory where folder will be automatically created (suffix '*_SD{SC_THRES}'),
                                                                         # to store post-processed station files (original filenames are maintained)
 
 sample_size: 10000                                                      # Intended sample size for the training_df. 
@@ -95,12 +95,12 @@ sc_method:  # Activate only one method.
             # More info on each method can be found on the respective papers (DOIs available).
 
   ndsi:                         # Normalised Difference Snow Index
-    active: false
+    active: true
     thresholds:
       NDSI_THRES: 0.40          # Default: 0.40
 
   Otsu_ndsi:                    # Optimised Normalised Difference Snow Index threshold
-    active: true               # Based on Otsu (1979) https://doi.org/10.1109/TSMC.1979.4310076
+    active: false               # Based on Otsu (1979) https://doi.org/10.1109/TSMC.1979.4310076
 
   Clustering_ndsi:              # Unsupervised classification
     active: false
@@ -154,31 +154,17 @@ sc_method:  # Activate only one method.
 # Meteorological forcing data
 #------------------------------------------
 meteo:
-  meteo_format: 'nc'                                                              # Options: 'ee' (Earth Engine Image Collection) or 'nc' (netCDF)
-  meteo_dir: './input_data/meteo/nc/cerra_3hourly_2021_2022_Olympus.nc'           # Add the meteo data path (Earth Engine, or local)
-  meteo_crs: 'EPSG:4326'                                                          # Add the CRS of the meteo data
-  meteo_scale: 5500                                                               # Add the spatial resolution (int in meters) of the meteo data
-  temperature:
-    var_name: '2t'                                                                # Add the variable name for air temperature
-    units: 'K'                                                                    # Options: 'C' or 'K' ... will be converted to degC
+  meteo_format: 'ee'                                                          # Options: 'ee' (Earth Engine Image Collection) or 'nc' (netCDF)
+  meteo_dir: 'ECMWF/ERA5_LAND/HOURLY'                                         # Add the meteo data path (Earth Engine, or local)
+  meteo_crs: 'EPSG:4326'                                                      # Add the CRS of the meteo data
+  meteo_scale: 11132                                                          # Add the spatial resolution (int in meters) of the meteo data
+  meteo_elev_dir: 'projects/<YOUR_PROJECT_NAME>/assets/snowmapper/ERA5_Land_geopotential_height'  # Upload orography (m) GeoTIF manualy as ee.Image()
+  temperature: 
+    var_name: 'temperature_2m'                                                # Add the variable name for air temperature
+    units: 'K'                                                                # Options: 'C' or 'K' ... will be converted to degC
   precipitation:
-    var_name: 'tp'                                                                # Add the variable name for precipitation
-    units: 'mm'                                                                   # Options: 'mm' or 'm' ... will be converted to mm
-  meteo_elev_dir: 'projects/ee-kalexopoulos/assets/snowMapper/cerra_orog_greece'  # Upload orography (m) GeoTIF manualy as ee.Image()
-
-# meteo:
-#   meteo_format: 'ee'                                                          # Options: 'ee' (Earth Engine Image Collection) or 'nc' (netCDF)
-#   meteo_dir: 'ECMWF/ERA5_LAND/HOURLY'                                         # Add the meteo data path (Earth Engine, or local)
-#   meteo_crs: 'EPSG:4326'                                                      # Add the CRS of the meteo data
-#   meteo_scale: 11132                                                          # Add the spatial resolution (int in meters) of the meteo data
-#   meteo_elev_dir: 'projects/snowmapper/assets/ERA5_Land_geopotential_height'  # Upload orography (m) GeoTIF manualy as ee.Image()
-#   # meteo_elev_dir: 'projects/<YOUR_PROJECT_NAME>/assets/snowmapper/ERA5_Land_geopotential_height'  # Upload orography (m) GeoTIF manualy as ee.Image()
-#   temperature: 
-#     var_name: 'temperature_2m'                                                # Add the variable name for air temperature
-#     units: 'K'                                                                # Options: 'C' or 'K' ... will be converted to degC
-#   precipitation:
-#     var_name: 'total_precipitation'                                           # Add the variable name for precipitation
-#     units: 'm'                                                                # Options: 'mm' or 'm' ... will be converted to mm
+    var_name: 'total_precipitation'                                           # Add the variable name for precipitation
+    units: 'm'                                                                # Options: 'mm' or 'm' ... will be converted to mm
 
 # Downscaling constants
 constants:     # Northern hemisphere defaults ... Liston & Elder (2006) https://doi.org/10.1175/JHM486.1
@@ -281,16 +267,8 @@ classifiers:                          # Activate only one classifier.
       shrinkage: 0.005                # Default: 0.005
       samplingRate: 0.7               # Default: 0.7
       maxNodes:                       # Default: null
-      loss: 'LeastAbsoluteDeviation'  # Options ('REGRESSION'): 'LeastSquares', 'LeastAbsoluteDeviation', 'Huber'
+      loss: 'LeastAbsoluteDeviation'  # Options: 'LeastSquares', 'LeastAbsoluteDeviation', 'Huber'
       seed: 0                         # Default: 0
-  
-  minimum_distance:                   # https://developers.google.com/earth-engine/apidocs/ee-classifier-minimumdistance
-    active: false
-    settings:
-      outputMode: 'CLASSIFICATION'    # Options: 'CLASSIFICATION'
-      classProperty: 'sc'             # Options: 'sc' ('CLASSIFICATION')
-      metric: 'euclidean'             # Options: 'euclidean', 'cosine', 'mahalanobis', 'manhattan'
-      kNearest: 1                     # Default: 1
   
   cart:                               # https://developers.google.com/earth-engine/apidocs/ee-classifier-smilecart
     active: false
@@ -308,13 +286,6 @@ classifiers:                          # Activate only one classifier.
       k: 1                            # Default: 1
       searchMethod: 'AUTO'            # Options: 'AUTO', 'LINEAR_SEARCH', 'KD_TREE', 'COVER_TREE'
       metric: 'EUCLIDEAN'             # Options: 'EUCLIDEAN', 'MAHALANOBIS', 'MANHATTAN', 'BRAYCURTIS' 
-
-  naive_bayes:                        # https://developers.google.com/earth-engine/apidocs/ee-classifier-smilenaivebayes
-    active: false
-    settings:
-      outputMode: 'CLASSIFICATION'    # Options: 'CLASSIFICATION'
-      classProperty: 'sc'             # Options: 'sc' ('CLASSIFICATION')
-      lambda: 0.000001                # Default: 0.000001
 
   support_vector_machine:             # https://developers.google.com/earth-engine/apidocs/ee-classifier-libsvm
     active: false
