@@ -158,7 +158,7 @@ meteo:
   meteo_dir: 'ECMWF/ERA5_LAND/HOURLY'                                         # Add the meteo data path (Earth Engine, or local)
   meteo_crs: 'EPSG:4326'                                                      # Add the CRS of the meteo data
   meteo_scale: 11132                                                          # Add the spatial resolution (int in meters) of the meteo data
-  meteo_elev_dir: 'projects/<YOUR_PROJECT_NAME>/assets/snowmapper/ERA5_Land_geopotential_height'  # Upload orography (m) GeoTIF manualy as ee.Image()
+  meteo_elev_dir: 'projects/<YOUR_EE_PROJECT_NAME>/assets/snowmapper/ERA5_Land_geopotential_height'  # Upload orography (m) GeoTIF manualy as ee.Image()
   temperature: 
     var_name: 'temperature_2m'                                                # Add the variable name for air temperature
     units: 'K'                                                                # Options: 'C' or 'K' ... will be converted to degC
