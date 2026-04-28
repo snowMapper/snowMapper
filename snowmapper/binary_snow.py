@@ -2,6 +2,8 @@
 _____________________________________________
 name: snowMapper 
 doi: 10.5281/zenodo.17663731
+licence: MIT
+contact: konstantis.alexopoulos@gmail.com
 _____________________________________________
 __________________________________________________________________________________________
 Description: Converts reflectance from clear-sky pixels into binary snow cover
