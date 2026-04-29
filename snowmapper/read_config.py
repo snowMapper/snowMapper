@@ -50,7 +50,7 @@ def read_config(config_file):
         raise FileNotFoundError(f"Configuration file {config_file} not found")
     
     # Load YAML configuration file into a dictionary
-    print(f" --- START -- Configuring snowMappar settings...")
+    print('- STARTING - Configuring snowMappar settings...')
     with open(config_file, 'r') as file:
         cfg = yaml.safe_load(file)
 
@@ -696,7 +696,7 @@ def read_config(config_file):
         or config_data['masks']['forest']
         or config_data['masks']['urban']
     ):
-        print('              IMPORTANT: No masks, other than the domain (default), have been selected.')
+        print('-- WARNING -- No masks, other than the domain (default), have been selected')
     
     #------------------------------------------------------------------------------------------------------------------------------
     # Machine learning settings
@@ -724,5 +724,5 @@ def read_config(config_file):
     config_data['input_vars'] = [k for k, v in cfg['input_vars'].items() if v]
     config_data['output_vars'] = [k for k, v in cfg['output_vars'].items() if v]
     
-    print(f" --- DONE --- Configuration successfully passed!")
+    print('--- DONE --- Configuration successfully passed!')
     return config_data
