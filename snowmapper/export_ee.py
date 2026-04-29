@@ -41,25 +41,41 @@ ee.Initialize()
 #===============================================================================
 def export_ee(collection, ee_project, name, roi_path, START_YEAR, END_YEAR, domain_ee, CRS, SCALE, CRS_TRANSFORM):
     path = f"projects/{ee_project}/assets/snowMapper/{roi_path}/{name}_{roi_path}_{START_YEAR}_{END_YEAR}"
+    
+    # Ensure the parent folder/collection exists
+    try:
+        ee.data.createAsset({'type': 'ImageCollection'}, path)
+    except ee.EEException:
+        # print(f"Collection {path} already exists.")
+        pass
+
     image_ids = collection.aggregate_array('system:index').getInfo()
     
-    # Create ImageCollection asset
-    ee.data.createAsset({'type': 'ImageCollection'}, path)
+    # Get the geometry explicitly
+    export_region = domain_ee.geometry() if isinstance(domain_ee, ee.FeatureCollection) else domain_ee
 
     tasks = []
     for image_id in image_ids:
-        image = ee.Image(collection.filter(ee.Filter.eq("system:index", image_id)).first())
+        # Better way to get the specific image
+        image = collection.filter(ee.Filter.eq("system:index", image_id)).first()
         
-        task = ee.batch.Export.image.toAsset(
-            image=image,
-            description=f"Export_{image_id}",
-            assetId=f"{path}/{image_id}",
-            region=domain_ee,
-            scale=SCALE,
-            crs=CRS,
-            crsTransform=CRS_TRANSFORM,
-            maxPixels=1e10
-        )
+        # Determine if we use scale or transform
+        export_params = {
+            'image': image,
+            'description': f"Export_{image_id}",
+            'assetId': f"{path}/{image_id}",
+            'region': export_region,
+            'crs': CRS,
+            'maxPixels': 1e10
+        }
+        
+        if CRS_TRANSFORM:
+            export_params['scale'] = SCALE
+        else:
+            export_params['crsTransform'] = CRS_TRANSFORM
+
+        task = ee.batch.Export.image.toAsset(**export_params)
         task.start()
         tasks.append(task)    
+    
     return tasks
