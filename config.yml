@@ -10,6 +10,15 @@ CRS: 'EPSG:4326'  # Default: "EPSG:4326"
 SCALE: 100        # Default: 100
 
 #------------------------------------------
+# Timeframe settings
+#------------------------------------------
+start_date: '2021-11-01'    # 'YYYY-MM-DD' (str) ............... Ensure availabiliry of meteorological inputs for an extra 24h prior to 'start_date'
+end_date: '2022-05-31'      # 'YYYY-MM-DD' (str) - Inclusive ... Ensure availabiliry of meteorological inputs for an extra 24h after the 'end_date'
+start_hour: 9              # Hour (int) - Default: 10 ......... Must overlap with meteo input timestep & be closest to mean satellite overpass time (~10 a.m.)
+SC_PROBAB_START_YEAR: 1991  # Year (int) - Default: 1991 .......
+SC_PROBAB_END_YEAR: 2020    # Year (int) - Default: 2020 ....... Must be at least 10 years after the SC_PROBAB_START_YEAR
+    
+#------------------------------------------
 # Domain paths
 #------------------------------------------
 # Path to domain / subdomain ... Must contain a columns named 'MapName' with a str used to define 'roi_name'.
@@ -22,44 +31,6 @@ subdomain_path: 'projects/snowmapper/assets/test_domain'
 roi_name: 'Mount Olympus'  # Name of ROI domain in 'MapName' field - same for both domain and subdomain (e.g. 'Mount Olympus').
 custom_path_name:          # May leave blank - otherwise populate with string similar to roi_name but without spaces (e.g. 'mount_olympus')
 
-#------------------------------------------
-# Training data
-#------------------------------------------
-stations:                                                               # OPTIONAL: File containing list of stations. Can be .csv or EE. Otherwise, leave empty.
-                                                                        # Column names: | 'STAID' (6-digit int) | 'lat' (float) | 'lon' (float) | 'elev' (float) |
-
-input_dir: './input_data/training/stations_daily_raw/'                  # Directory of folder with raw station files
-                                                                        # Filename format: 'STAIDXXXXXX.txt' (XXXXXX same as in 'STAID' column in 'stations.csv')
-                                                                        # Column names: | 'DATE' (YYYY-MM-DD) | 'TG' (degC) | 'RR' (mm) | 'SD' (cm) |
-
-SC_THRES: 1                                                             # Options: 1, 3, 5, 10 (Reconstruction accuracy will be affected if SC_THRES
-                                                                        #                       is too low/high for the selected SCALE)
-                                                                        # Literature: Barrou Dumont et al. (2025) https://doi.org/10.5194/tc-19-2407-2025
-                                                                        #             Pan et al. (2024) https://doi.org/10.5194/essd-16-2501-2024
-                                                                        #             Poussin et al. (2024) https://doi.org/10.1016/j.srs.2024.100182
-                                                                        #             Sadeghi et al. (2025) https://doi.org/10.1002/joc.8780
-                                                                        #             Notarnicola (2020) https://doi.org/10.1016/j.rse.2020.111781
-
-output_root: './input_data/training/'                                   # Root directory where folder will be automatically created (suffix '*_SD{SC_THRES}'),
-                                                                        # to store post-processed station files (original filenames are maintained)
-
-sample_size: 10000                                                      # Intended sample size for the training_df. 
-                                                                        # Final size of the df will be smaller due to sampling method.
-
-training_dataset:                                                       # OPTIONAL: Path for pre-constructed training dataset. Leave empty otherwise.
-                                                                        # Filename format: 'training_<SCALE>m_SD<SC_THRES>_<sample_size/1000>k.csv'
-
-classifier_path: 'projects/snowmapper/assets/random_forest_classifier'  # OPTIONAL: Path for pre-trained machine learning classifier. Leave empty otherwise.
-
-#------------------------------------------
-# Timeframe settings
-#------------------------------------------
-start_date: '2021-11-01'    # 'YYYY-MM-DD' (str) ............... Ensure availabiliry of meteorological inputs for an extra 24h prior to 'start_date'
-end_date: '2022-05-31'      # 'YYYY-MM-DD' (str) - Inclusive ... Ensure availabiliry of meteorological inputs for an extra 24h after the 'end_date'
-start_hour: 9              # Hour (int) - Default: 10 ......... Must overlap with meteo input timestep & be closest to mean satellite overpass time (~10 a.m.)
-SC_PROBAB_START_YEAR: 1991  # Year (int) - Default: 1991 .......
-SC_PROBAB_END_YEAR: 2020    # Year (int) - Default: 2020 ....... Must be at least 10 years after the SC_PROBAB_START_YEAR
-    
 #------------------------------------------
 # Masks
 #------------------------------------------
@@ -240,6 +211,35 @@ decision_tree_settings:    # Stages & thresholds for the decision-tree-based gap
   sc_probab: false         # If the multi-year snow cover probability for that month is 1(0), then sc for that day will be 1(0).
   SNOW_PROBAB_THRES: 1.0   # Default: 0.99 ..... Threshold for passive multiyear probability-based gap-filling in sm.reconstruct_daily()
   
+#------------------------------------------
+# Training data
+#------------------------------------------
+stations:                                                               # OPTIONAL: File containing list of stations. Can be .csv or EE. Otherwise, leave empty.
+                                                                        # Column names: | 'STAID' (6-digit int) | 'lat' (float) | 'lon' (float) | 'elev' (float) |
+
+input_dir: './input_data/training/stations_daily_raw/'                  # Directory of folder with raw station files
+                                                                        # Filename format: 'STAIDXXXXXX.txt' (XXXXXX same as in 'STAID' column in 'stations.csv')
+                                                                        # Column names: | 'DATE' (YYYY-MM-DD) | 'TG' (degC) | 'RR' (mm) | 'SD' (cm) |
+
+SC_THRES: 1                                                             # Options: 1, 3, 5, 10 (Reconstruction accuracy will be affected if SC_THRES
+                                                                        #                       is too low/high for the selected SCALE)
+                                                                        # Literature: Barrou Dumont et al. (2025) https://doi.org/10.5194/tc-19-2407-2025
+                                                                        #             Pan et al. (2024) https://doi.org/10.5194/essd-16-2501-2024
+                                                                        #             Poussin et al. (2024) https://doi.org/10.1016/j.srs.2024.100182
+                                                                        #             Sadeghi et al. (2025) https://doi.org/10.1002/joc.8780
+                                                                        #             Notarnicola (2020) https://doi.org/10.1016/j.rse.2020.111781
+
+output_root: './input_data/training/'                                   # Root directory where folder will be automatically created (suffix '*_SD{SC_THRES}'),
+                                                                        # to store post-processed station files (original filenames are maintained)
+
+sample_size: 10000                                                      # Intended sample size for the training_df. 
+                                                                        # Final size of the df will be smaller due to sampling method.
+
+training_dataset:                                                       # OPTIONAL: Path for pre-constructed training dataset. Leave empty otherwise.
+                                                                        # Filename format: 'training_<SCALE>m_SD<SC_THRES>_<sample_size/1000>k.csv'
+
+classifier_path: 'projects/snowmapper/assets/random_forest_classifier'  # OPTIONAL: Path for pre-trained machine learning classifier. Leave empty otherwise.
+
 #------------------------------------------
 # Machine learning settings
 #------------------------------------------
