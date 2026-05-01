@@ -27,7 +27,7 @@ Optional aggregation routines allow fractional snow-cover metrics to be generate
 The system operates entirely on Google Earth Engine via its Python API, reducing dependence on local data storage and eliminating local computational demands.
 
 ## Get started with snowMapper!
-### 🌐 Choose one of two environment files based on your operating system.
+### 1. Choose one of two environment files based on your operating system.
 
 For MacOs:
 ```
@@ -41,6 +41,11 @@ Activate environment:
 ```
 conda activate snowmapper
 ```
-```
-import snowmapper as sm
-```
+
+### 2. Create your own custom snowMapper configuration
+You can do this using the [`config.yml`](https://github.com/snowMapper/snowMapper/blob/f324dd07ba5015610aaceb5ae95ecbad19ed6a34/config.yml)
+
+### 3. Use the available notebooks to:
+- Run snowMapper [`1_snowmapper_main.ipynb`](https://github.com/snowMapper/snowMapper/blob/f324dd07ba5015610aaceb5ae95ecbad19ed6a34/1_snowmapper_main.ipynb)
+- Evaluate the reconstruction skill [`2_skill_evaluation.ipynb`](https://github.com/snowMapper/snowMapper/blob/f324dd07ba5015610aaceb5ae95ecbad19ed6a34/2_skill_evaluation.ipynb)
+- Visualise the results [`3_vis_timeseries.ipynb`](https://github.com/snowMapper/snowMapper/blob/f324dd07ba5015610aaceb5ae95ecbad19ed6a34/3_vis_timeseries.ipynb)
