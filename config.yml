@@ -42,11 +42,13 @@ masks:
   water: jrc_global_surface_water          # Options: - false
                                            #          - jrc_global_surface_water (no download required) ..... 'JRC/GSW1_4/GlobalSurfaceWater'
                                            #          - esa_worldcover (no download required) ............... 'ESA/WorldCover/v100'
-  forest: false                            # Options: - false
+  forest: esa_worldcover                   # Options: - false
                                            #          - esa_worldcover (no download required) ............... 'ESA/WorldCover/v100'
                                            #          - jrc_global_forest_cover (no download required) ...... 'JRC/GFC2020/V2'
   urban: false                             # Options: - false
                                            #          - esa_worldcover (no download required) ............... 'ESA/WorldCover/v100'
+  custom: false                            # Options: - false
+                                           #          - path to ee.Image() with masking value == 1 .......... e.g. 'projects/your-ee-project-name/assets/custom_mask'
 
 #------------------------------------------
 # Satellite missions
