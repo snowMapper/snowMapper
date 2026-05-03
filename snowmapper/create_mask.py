@@ -81,7 +81,12 @@ def create_mask(masks, domain_ee, CRS, SCALE):
         landcover_img = ee.ImageCollection('ESA/WorldCover/v100').first().select('Map')
         urban_mask = landcover_img.eq(50).byte().rename('mask')
         mask_imgs.append(urban_mask)
-    
+
+    if masks['custom']:
+        custom_img = ee.Image(masks['custom'])
+        custom_mask = custom_img.eq(1).byte().rename('mask')
+        mask_imgs.append(custom_mask)
+        
     combined_mask = (
         ee.ImageCollection(mask_imgs)
           .sum()
