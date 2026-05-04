@@ -24,7 +24,7 @@ SC_PROBAB_END_YEAR: 2020    # Year (int) - Default: 2020 ....... Must be at leas
 # Path to domain / subdomain ... Must contain a columns named 'MapName' with a str used to define 'roi_name'.
 #                                Subdomain must be within the area of the domain, and can be used for aggregation of final
 #                                results to smaller areas. If no subdomain exists, enter the same path as in the domain.
-#                                Options: - Earth Engine feature collection (prefered) -> should be stored under 'projects/<ee_project>/assets/snowMapper/<filename>'
+#                                Options: - Earth Engine feature collection (prefered) -> should be stored under 'projects/<YOUR_EE_PROJECT_NAME>/assets/snowMapper/<filename>'
 #                                         - SHP (will be converted to EE asset internally) -> should be stored under './input_data/roi/<filename>'
 domain_path: 'projects/snowmapper/assets/test_domain'  
 subdomain_path: 'projects/snowmapper/assets/test_domain'
@@ -48,7 +48,7 @@ masks:
   urban: false                             # Options: - false
                                            #          - esa_worldcover (no download required) ............... 'ESA/WorldCover/v100'
   custom: false                            # Options: - false
-                                           #          - path to ee.Image() with masking value == 1 .......... e.g. 'projects/your-ee-project-name/assets/custom_mask'
+                                           #          - path to ee.Image() with masking value == 1 .......... e.g. 'projects/<YOUR_EE_PROJECT_NAME>/assets/<custom_mask_name>'
 
 #------------------------------------------
 # Satellite missions
