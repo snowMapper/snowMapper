@@ -53,13 +53,51 @@ masks:
 #------------------------------------------
 # Satellite missions
 #------------------------------------------
+# AVAILABLE SETTINGS:
+# - enable: allows you to include or exclude imagery from specific satellite sensors
+# - max_cloud_cover (OPTIONAL): allows you to set a max cloud cover percentage. If not set, it defaults
+#                               to 100, aka all images are included regardless of cloud coverage
+# - mgrs_tile (OPTIONAL): allows you to specify which Sentinel-2 tiles you want included by including their 
+#                         'MGRS_TILE' code (if more than one, add as different bullet points). 
+#                         This is useful if you want to export snow-cover maps of the
+#                         full area and your study area includes a tile which only covers a small part of it.
+#                         For the snowMapper reconstruction, I recommend leaving this (as well as 'max_cloud_cover') 
+#                         empty, as you want to use all available data/pixels. A possible application where using
+#                         these settings might be of use is if you want to export preprocessed satellite imagery or 
+#                         raw snow cover maps (i.e., pre-reconstruction) to use for validating the snow cover output
+#                         of a snowpack model (e.g., openAMUNDSEN, etc.)
+# - wrs_path_row (OPTIONAL): same as above, but for Landsat missions instead of Sentinel-2, using unique combinations
+#                            '[WRS_PATH, WRS_ROW]' codes (if more than one pair, add each pair on a different bullet point).
+#                            NOTE: All Landsat missions follow the same paths/rows, so if you're using data from more 
+#                            than one Landsat mission, you can include the same settings across all of them (but also you don't have to).
+
 missions:
-  Sentinel_2: true  # 'COPERNICUS/S2_SR_HARMONIZED' ... '2017-03-28' - ongoing
-  Landsat_9: true   # 'LANDSAT/LC09/C02/T1_L2' ........ '2021-10-31' - ongoing
-  Landsat_8: true   # 'LANDSAT/LC08/C02/T1_L2' ........ '2013-03-18' - ongoing
-  Landsat_7: true   # 'LANDSAT/LE07/C02/T1_L2' ........ '1999-05-28' - '2024-01-19'
-  Landsat_5: true   # 'LANDSAT/LT05/C02/T1_L2' ........ '1984-03-16' - '2012-05-05'
-  Landsat_4: true   # 'LANDSAT/LT04/C02/T1_L2' ........ '1982-08-22' - '1993-06-24'
+  Sentinel_2:             # 'COPERNICUS/S2_SR_HARMONIZED' ... '2017-03-28' - ongoing
+    enable: true
+    max_cloud_cover: 20
+    mgrs_tile:
+      - '34TFK'
+  Landsat_9:              # 'LANDSAT/LC09/C02/T1_L2' ........ '2021-10-31' - ongoing
+    enable: true
+    max_cloud_cover:
+    wrs_path_row:
+      - [184, 32]
+  Landsat_8:              # 'LANDSAT/LC08/C02/T1_L2' ........ '2013-03-18' - ongoing
+    enable: true
+    max_cloud_cover:
+    wrs_path_row:
+  Landsat_7:              # 'LANDSAT/LE07/C02/T1_L2' ........ '1999-05-28' - '2024-01-19'
+    enable: true
+    max_cloud_cover: ee
+    wrs_path_row:
+  Landsat_5:              # 'LANDSAT/LT05/C02/T1_L2' ........ '1984-03-16' - '2012-05-05'
+    enable: true
+    max_cloud_cover:
+    wrs_path_row:
+  Landsat_4:              # 'LANDSAT/LT04/C02/T1_L2' ........ '1982-08-22' - '1993-06-24'
+    enable: true
+    max_cloud_cover:
+    wrs_path_row:
 
 #------------------------------------------
 # Binary snow methods & thresholds
