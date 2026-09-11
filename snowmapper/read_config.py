@@ -282,15 +282,37 @@ def read_config(config_file):
     # Satellite missions
     #------------------------------------------------------------------------------------------------------------------------------
     config_data['missions'] = cfg['missions']
-    if not (
-        config_data['missions']['Sentinel_2']
-        or config_data['missions']['Landsat_9']
-        or config_data['missions']['Landsat_8']
-        or config_data['missions']['Landsat_7']
-        or config_data['missions']['Landsat_5']
-        or config_data['missions']['Landsat_4']
-    ):
-        raise ValueError('At least one satellite mission must be activated.')
+
+    # 1. Ensure at least one mission is active
+    any_enabled = any(
+        m_info.get('enable', False) 
+        for m_info in config_data['missions'].values() 
+        if isinstance(m_info, dict)
+    )
+    if not any_enabled:
+        raise ValueError('At least one satellite mission must be activated (enable: true).')
+
+    # 2. Parse, clean, and set defaults
+    for mission_name, m_info in config_data['missions'].items():
+        if isinstance(m_info, dict):
+            # Default cloud_cover if omitted or null
+            if m_info.get('max_cloud_cover') is None:
+                m_info['max_cloud_cover'] = 100
+                
+            # Clean MGRS tiles (remove empty string bullets or None)
+            if 'mgrs_tile' in m_info and isinstance(m_info['mgrs_tile'], list):
+                m_info['mgrs_tile'] = [
+                    str(t).strip() for t in m_info['mgrs_tile'] 
+                    if t is not None and str(t).strip() != ''
+                ]
+                
+            # Clean WRS Path/Row pairs (ensure valid 2-element list of integers)
+            if 'wrs_path_row' in m_info and isinstance(m_info['wrs_path_row'], list):
+                valid_pairs = []
+                for pr in m_info['wrs_path_row']:
+                    if isinstance(pr, (list, tuple)) and len(pr) == 2 and None not in pr:
+                        valid_pairs.append([int(pr[0]), int(pr[1])])
+                m_info['wrs_path_row'] = valid_pairs
         
     #------------------------------------------------------------------------------------------------------------------------------
     # Snow classification parameters
