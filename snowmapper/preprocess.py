@@ -276,6 +276,46 @@ def preprocess(domain_ee, start_date, end_date, months_list, missions):
         return ee.Image(img)
 
     #------------------------------------------
+    # Filter based on cloud cover & tiles
+    #------------------------------------------
+    def apply_s2_filters(collection, s2_config):
+        """Filters Sentinel-2 by cloud cover and optional MGRS tiles."""
+        # Direct lookup since read_config guarantees 'cloud_cover' exists
+        collection = collection.filter(
+            ee.Filter.lte('CLOUDY_PIXEL_PERCENTAGE', s2_config['max_cloud_cover'])
+        )
+        
+        # MGRS Tile filter
+        tiles = s2_config.get('mgrs_tile', [])
+        if tiles:
+            collection = collection.filter(ee.Filter.inList('MGRS_TILE', tiles))
+            
+        return collection
+
+    def apply_landsat_filters(collection, landsat_config):
+        """Filters Landsat by cloud cover and optional WRS Path/Row pairs."""
+        # Cloud cover filter
+        collection = collection.filter(
+            ee.Filter.lte('CLOUD_COVER', landsat_config['max_cloud_cover'])
+        )
+        
+        # WRS Path/Row filter
+        path_rows = landsat_config.get('wrs_path_row', [])
+        if path_rows:
+            filters = [
+                ee.Filter.And(
+                    ee.Filter.eq('WRS_PATH', pr[0]),
+                    ee.Filter.eq('WRS_ROW', pr[1])
+                )
+                for pr in path_rows
+            ]
+            # Combine list of filters with ee.Filter.Or
+            combined_filter = ee.Filter.Or(filters) if len(filters) > 1 else filters[0]
+            collection = collection.filter(combined_filter)
+            
+        return collection
+
+    #------------------------------------------
     # Run based on Spacecraft ID
     #------------------------------------------
     raw_col = ee.ImageCollection([])
@@ -283,7 +323,7 @@ def preprocess(domain_ee, start_date, end_date, months_list, missions):
     start_month = months_list[0]
     end_month = months_list[-1]
     
-    if missions["Sentinel_2"]:
+    if missions["Sentinel_2"].get("enable"):
         csPlus = (
             ee.ImageCollection('GOOGLE/CLOUD_SCORE_PLUS/V1/S2_HARMONIZED')
               .filterDate(start_date, end_date)
@@ -295,59 +335,60 @@ def preprocess(domain_ee, start_date, end_date, months_list, missions):
               .filterBounds(domain_ee)
               .filterDate(start_date, end_date)
               .filter(ee.Filter.calendarRange(start_month, end_month, 'month'))
-              .linkCollection(csPlus, ['cs_cdf'])
-              .map(preprocess_S2)
         )
+        S2 = apply_s2_filters(S2, missions["Sentinel_2"])
+        S2 = S2.linkCollection(csPlus, ['cs_cdf']).map(preprocess_S2)
+        
         raw_col = raw_col.merge(S2)
     
-    if missions["Landsat_9"]:
+    if missions["Landsat_9"].get("enable"):
         L9 = (
             ee.ImageCollection("LANDSAT/LC09/C02/T1_L2")
               .filterBounds(domain_ee)
               .filterDate(start_date, end_date)
               .filter(ee.Filter.calendarRange(start_month, end_month, 'month'))
-              .map(preprocess_L89)
         )
-        raw_col = raw_col.merge(L9)               
+        L9 = apply_landsat_filters(L9, missions["Landsat_9"]).map(preprocess_L89)
+        raw_col = raw_col.merge(L9)
     
-    if missions["Landsat_8"]:
+    if missions["Landsat_8"].get("enable"):
         L8 = (
             ee.ImageCollection("LANDSAT/LC08/C02/T1_L2")
               .filterBounds(domain_ee)
               .filterDate(start_date, end_date)
               .filter(ee.Filter.calendarRange(start_month, end_month, 'month'))
-              .map(preprocess_L89)
         )
+        L8 = apply_landsat_filters(L8, missions["Landsat_8"]).map(preprocess_L89)
         raw_col = raw_col.merge(L8)
     
-    if missions["Landsat_7"]:
+    if missions["Landsat_7"].get("enable"):
         L7 = (
             ee.ImageCollection("LANDSAT/LE07/C02/T1_L2")
               .filterBounds(domain_ee)
               .filterDate(start_date, end_date)
               .filter(ee.Filter.calendarRange(start_month, end_month, 'month'))
-              .map(preprocess_L457)
         )
+        L7 = apply_landsat_filters(L7, missions["Landsat_7"]).map(preprocess_L457)
         raw_col = raw_col.merge(L7)
     
-    if missions["Landsat_5"]:
+    if missions["Landsat_5"].get("enable"):
         L5 = (
             ee.ImageCollection("LANDSAT/LT05/C02/T1_L2")
               .filterBounds(domain_ee)
               .filterDate(start_date, end_date)
               .filter(ee.Filter.calendarRange(start_month, end_month, 'month'))
-              .map(preprocess_L457)
         )
+        L5 = apply_landsat_filters(L5, missions["Landsat_5"]).map(preprocess_L457)
         raw_col = raw_col.merge(L5)
     
-    if missions["Landsat_4"]:
+    if missions["Landsat_4"].get("enable"):
         L4 = (
             ee.ImageCollection("LANDSAT/LT04/C02/T1_L2")
               .filterBounds(domain_ee)
               .filterDate(start_date, end_date)
               .filter(ee.Filter.calendarRange(start_month, end_month, 'month'))
-              .map(preprocess_L457)
         )
+        L4 = apply_landsat_filters(L4, missions["Landsat_4"]).map(preprocess_L457)
         raw_col = raw_col.merge(L4)
                 
     return ee.ImageCollection(raw_col)
