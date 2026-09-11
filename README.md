@@ -1,9 +1,9 @@
 # snowMapper ❄️🏔️🛰️🗺️
 
-[![Journal: The Cryosphere](https://img.shields.io/badge/Journal-The_Cryosphere-teal.svg)](https://doi.org/10.5194/tc-20-2209-2026)
-[![Conference: EGU26](https://img.shields.io/badge/Conference-EGU-teal.svg)](https://meetingorganizer.copernicus.org/EGU26/EGU26-347.html)
 [![DOI](https://img.shields.io/badge/DOI-10.5281/zenodo.19900475-blue.svg)](https://doi.org/10.5281/zenodo.19900475)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Journal: The Cryosphere](https://img.shields.io/badge/Journal-The_Cryosphere-teal.svg)](https://doi.org/10.5194/tc-20-2209-2026)
+[![Conference: EGU26](https://img.shields.io/badge/Conference-EGU-teal.svg)](https://meetingorganizer.copernicus.org/EGU26/EGU26-347.html)
 
 ## *A Python GEE package for mapping & reconstructing high-res daily snow cover.*
 
