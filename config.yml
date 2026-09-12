@@ -105,61 +105,76 @@ missions:
 sc_method:  # Activate only one method. 
             # More info on each method can be found on the respective papers (DOIs available).
 
-  ndsi:                         # Normalised Difference Snow Index
+  ndsi:                          # Normalised Difference Snow Index
     active: true
     thresholds:
-      NDSI_THRES: 0.40          # Default: 0.40
+      NDSI_THRES: 0.40           # Default: 0.40
 
-  Otsu_ndsi:                    # Optimised Normalised Difference Snow Index threshold
-    active: false               # Based on Otsu (1979) https://doi.org/10.1109/TSMC.1979.4310076
+  Otsu_ndsi:                     # Dynamically optimised Normalised Difference Snow Index threshold
+    active: false                 # Based on Otsu (1979) https://doi.org/10.1109/TSMC.1979.4310076
+    thresholds:
+      OTSU_MIN_THRES: 0.10       # Default: 0.10
+      OTSU_MAX_THRES: 0.50       # Default: 0.50
+      OTSU_FALLBACK_THRES: 0.40  # Default: 0.40
+      NIR_THRES: 0.11            # Default: 0.11 ... Eliminates dark terrain shadows (not used to find the NDSI threshold)
+      GREEN_THRES: 0.10          # Default: 0.10 ... Eliminates dark non-Snow surfaces (not used to find the NDSI threshold)
 
-  Clustering_ndsi:              # Unsupervised classification
+  Otsu_ndfsi:                    # Dynamically optimised Normalised Difference Forest Snow Index threshold
+    active: false                # Based on Otsu (1979) https://doi.org/10.1109/TSMC.1979.4310076
+    thresholds:
+      OTSU_MIN_THRES: 0.20       # Default: 0.20
+      OTSU_MAX_THRES: 0.70       # Default: 0.70
+      OTSU_FALLBACK_THRES: 0.50  # Default: 0.50
+      NIR_THRES: 0.11            # Default: 0.11 ... Eliminates dark terrain shadows (not used to find the NDSI threshold)
+      GREEN_THRES: 0.10          # Default: 0.10 ... Eliminates dark non-Snow surfaces (not used to find the NDSI threshold)
+  
+  Clustering_ndsi:               # Unsupervised classification
     active: false
     thresholds:
-      TRAINING_SAMPLE: 5000     # Default: 5000
+      TRAINING_SAMPLE: 5000      # Default: 5000
 
-  Gascoin_2015:                 # Gascoin et al. (2015) https://doi.org/10.5194/hess-19-2337-2015
+  Gascoin_2015:                  # Gascoin et al. (2015) https://doi.org/10.5194/hess-19-2337-2015
     active: false
     thresholds:
-      NDSI_THRES: 0.40          # Default: 0.40
-      RED_THRES: 0.12           # Default: 0.12
-      SWIR_THRES: 0.16          # Default: 0.16
+      NDSI_THRES: 0.40           # Default: 0.40
+      RED_THRES: 0.12            # Default: 0.12
+      SWIR_THRES: 0.16           # Default: 0.16
 
-  Gascoin_2019:                 # Gascoin et al. (2019) https://doi.org/10.5194/essd-11-493-2019 (modified)
+  Gascoin_2019:                  # Gascoin et al. (2019) https://doi.org/10.5194/essd-11-493-2019 (modified)
     active: false
     thresholds:
-      NDSI_THRES: 0.40          # Default: 0.40
-      RED_THRES: 0.20           # Default: 0.20
+      NDSI_THRES: 0.40           # Default: 0.40
+      RED_THRES: 0.20            # Default: 0.20
 
-  Koehler_2022:                 # Koehler et al. (2022) https://doi.org/10.3390/rs14184461 (modified)
+  Koehler_2022:                  # Koehler et al. (2022) https://doi.org/10.3390/rs14184461 (modified)
     active: false
     thresholds:
-      NDSI_THRES: 0.40          # Default: 0.40
-      TEMP_THRES: 288           # Default: 288 (K) ... Leave blank if 'Sentinel_2' is selected.
-      NDVI_THRES: 0.10          # Default: 0.10
-      WATER_NDWI_THRES: 0.00    # Default: 0.00
-      WATER_GREEN_THRES: 0.20   # Default: 0.20
-      SHADOW_SWIR_THRES: 0.02   # Default: 0.02
-      SHADOW_GREEN_THRES: 0.20  # Default: 0.20
-      SHADOW_NDVI_THRES: 0.10   # Default: 0.10
-      NDLI_THRES: 0.10          # Default: 0.10
+      NDSI_THRES: 0.40           # Default: 0.40
+      TEMP_THRES: 288            # Default: 288 (K) ... Leave blank if 'Sentinel_2' is selected.
+      NDVI_THRES: 0.10           # Default: 0.10
+      WATER_NDWI_THRES: 0.00     # Default: 0.00
+      WATER_GREEN_THRES: 0.20    # Default: 0.20
+      SHADOW_SWIR_THRES: 0.02    # Default: 0.02
+      SHADOW_GREEN_THRES: 0.20   # Default: 0.20
+      SHADOW_NDVI_THRES: 0.10    # Default: 0.10
+      NDLI_THRES: 0.10           # Default: 0.10
 
-  Wang_2025:                    # Wang et al. (2025) https://doi.org/10.1016/j.jhydrol.2025.133303
+  Wang_2025:                     # Wang et al. (2025) https://doi.org/10.1016/j.jhydrol.2025.133303
     active: false
-    thresholds:                 # Forest mask is sourced from 'ESA/WorldCover/v100'
-      NDSI_THRES_P1: 0.40       # Default: 0.40
-      BLUE_THRES_P1: 0.20       # Default: 0.20
-      NDSI_THRES_P2: 0.12       # Default: 0.12
-      BLUE_THRES_P2: 0.07       # Default: 0.07
-      NDWI_THRES_P2: 0.20       # Default: 0.20
-      NDSI_THRES_P3: 0.45       # Default: 0.45
-      BLUE_THRES_P3: 0.07       # Default: 0.07
-      NDSI_THRES_P4: 0.00       # Default: 0.00
-      NDFSI_THRES_P4: 0.50      # Default: 0.50
-      BLUE_THRES_P4: 0.07       # Default: 0.07
-      NDSI_THRES_P5: 0.70       # Default: 0.70
-      NDFSI_THRES_P5: 0.70      # Default: 0.70
-      TEMP_THRES: 283           # Default: 283 (K) ... Leave blank if 'Sentinel_2' is selected.
+    thresholds:                  # Forest mask is sourced from 'ESA/WorldCover/v100'
+      NDSI_THRES_P1: 0.40        # Default: 0.40
+      BLUE_THRES_P1: 0.20        # Default: 0.20
+      NDSI_THRES_P2: 0.12        # Default: 0.12
+      BLUE_THRES_P2: 0.07        # Default: 0.07
+      NDWI_THRES_P2: 0.20        # Default: 0.20
+      NDSI_THRES_P3: 0.45        # Default: 0.45
+      BLUE_THRES_P3: 0.07        # Default: 0.07
+      NDSI_THRES_P4: 0.00        # Default: 0.00
+      NDFSI_THRES_P4: 0.50       # Default: 0.50
+      BLUE_THRES_P4: 0.07        # Default: 0.07
+      NDSI_THRES_P5: 0.70        # Default: 0.70
+      NDFSI_THRES_P5: 0.70       # Default: 0.70
+      TEMP_THRES: 283            # Default: 283 (K) ... Leave blank if 'Sentinel_2' is selected.
 
 #------------------------------------------
 # Meteorological forcing data
