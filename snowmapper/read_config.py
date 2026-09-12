@@ -336,7 +336,7 @@ def read_config(config_file):
     config_data['thresholds'] = thresholds
 
     print(f"              Snow mapping method: {config_data['active_method']}")
-    if active_method == 'Otsu_ndsi' or active_method == 'Clustering_ndsi':
+    if active_method == 'Clustering_ndsi':
         print(f"-- WARNING -- {config_data['active_method']} is not yet fully operational")
 
     #------------------------------------------------------------------------------------------------------------------------------
