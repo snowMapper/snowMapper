@@ -111,7 +111,7 @@ sc_method:  # Activate only one method.
       NDSI_THRES: 0.40           # Default: 0.40
 
   Otsu_ndsi:                     # Dynamically optimised Normalised Difference Snow Index threshold
-    active: false                 # Based on Otsu (1979) https://doi.org/10.1109/TSMC.1979.4310076
+    active: false                # Based on Otsu (1979) https://doi.org/10.1109/TSMC.1979.4310076
     thresholds:
       OTSU_MIN_THRES: 0.10       # Default: 0.10
       OTSU_MAX_THRES: 0.50       # Default: 0.50
