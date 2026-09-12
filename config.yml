@@ -88,7 +88,7 @@ missions:
     wrs_path_row:
   Landsat_7:              # 'LANDSAT/LE07/C02/T1_L2' ........ '1999-05-28' - '2024-01-19'
     enable: true
-    max_cloud_cover: ee
+    max_cloud_cover:
     wrs_path_row:
   Landsat_5:              # 'LANDSAT/LT05/C02/T1_L2' ........ '1984-03-16' - '2012-05-05'
     enable: true
