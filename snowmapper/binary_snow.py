@@ -128,13 +128,115 @@ def method_otsu_ndsi(img, thresholds, domain_ee, SCALE):
         ee.Dictionary({'histogram': [1, 1], 'bucketMeans': [0, 0.4]})
     ))
     
-    # Calculate threshold
+    # Calculate raw Otsu threshold
     otsu_thres = otsu(safe_dict)
     
-    # Use the calculated threshold IF data existed, else fallback to 0.4
-    final_thres = ee.Number(ee.Algorithms.If(hist_dict.contains('histogram'), otsu_thres, 0.4))
+    # Check if otsu_thres is within the valid snow threshold range
+    # If it falls outside (e.g. unimodal non-snow histogram), fallback to OTSU_FALLBACK_THRES
+    valid_otsu = otsu_thres.gte(thresholds["OTSU_MIN_THRES"]).And(otsu_thres.lte(thresholds["OTSU_MAX_THRES"]))
     
-    sc_obs = ndsi.gt(ee.Image.constant(final_thres))
+    final_thres = ee.Number(
+        ee.Algorithms.If(
+            hist_dict.contains('histogram'),
+            ee.Algorithms.If(valid_otsu, otsu_thres, thresholds["OTSU_FALLBACK_THRES"]),
+            thresholds["OTSU_FALLBACK_THRES"]
+        )
+    )
+    
+    sc_obs = ndsi.gt(ee.Image.constant(final_thres)) \
+        .And(img.select("nir").gt(thresholds["NIR_THRES"])) \
+        .And(img.select("green").gt(thresholds["GREEN_THRES"]))
+
+    return img.addBands(sc_obs.rename("sc_obs")).select("sc_obs").toUint8().copyProperties(img, ["system:time_start"])
+
+#===============================================================================
+# Method: Otsu NDFSI, based on Otsu (1979)
+#===============================================================================
+@register_method("Otsu_ndfsi")
+def method_otsu_ndfsi(img, thresholds, domain_ee, SCALE):
+    ndfsi = img.normalizedDifference(["nir", "swir1"]).rename('NDFSI')   # Normalised Difference Forest Snow Index
+    
+    # -----------------------------
+    # Otsu threshold function
+    # -----------------------------
+    def otsu(hist_dict):
+        counts = ee.Array(ee.List(hist_dict.get('histogram')))
+        means = ee.Array(ee.List(hist_dict.get('bucketMeans')))
+    
+        total = counts.accum(0).get([-1])
+        sum_total = counts.multiply(means).accum(0).get([-1])
+    
+        counts_cum = counts.accum(0)
+        sums_cum = counts.multiply(means).accum(0)
+    
+        size = counts.length().get([0])
+        
+        total_arr = ee.Array([total]).repeat(0, size)
+        sum_total_arr = ee.Array([sum_total]).repeat(0, size)
+        
+        # weights
+        w1 = counts_cum.divide(total)
+        ones = ee.Array([1]).repeat(0, size)
+        w2 = ones.subtract(w1)
+        
+        # means
+        mu1 = sums_cum.divide(counts_cum.max(1))
+        
+        mu2 = sum_total_arr.subtract(sums_cum).divide(
+            total_arr.subtract(counts_cum).max(1)
+        )
+    
+        # between-class variance
+        bss = w1.multiply(w2).multiply(mu1.subtract(mu2).pow(2))
+        bss_clipped = bss.slice(0, 0, -1)
+    
+        idx = bss_clipped.argmax()
+    
+        return means.get(idx)
+
+    # -----------------------------
+    # Compute histogram
+    # -----------------------------
+    hist = ndfsi.reduceRegion(
+        reducer=ee.Reducer.histogram(maxBuckets=256),
+        geometry=domain_ee,
+        scale=SCALE,
+        bestEffort=True,
+        # tileScale=16
+    )
+    
+    hist_dict = ee.Dictionary(hist.get('NDFSI'))
+    
+    # -----------------------------
+    # Calculate & apply optimised NDFSI threshold
+    # -----------------------------    
+    # Create a safe dictionary to prevent otsu() from failing on null data
+    # If the histogram is missing, we use a dummy one where the result will be ignored
+    safe_dict = ee.Dictionary(ee.Algorithms.If(
+        hist_dict.contains('histogram'),
+        hist_dict,
+        ee.Dictionary({'histogram': [1, 1], 'bucketMeans': [0, 0.4]})
+    ))
+    
+    # Calculate raw Otsu threshold
+    otsu_thres = otsu(safe_dict)
+    
+    # Check if otsu_thres is within the valid snow threshold range
+    # If it falls outside (e.g. unimodal non-snow histogram), fallback to OTSU_FALLBACK_THRES
+    valid_otsu = otsu_thres.gte(thresholds["OTSU_MIN_THRES"]).And(otsu_thres.lte(thresholds["OTSU_MAX_THRES"]))
+
+    final_thres = ee.Number(
+        ee.Algorithms.If(
+            hist_dict.contains('histogram'),
+            ee.Algorithms.If(valid_otsu, otsu_thres, thresholds["OTSU_FALLBACK_THRES"]),
+            thresholds["OTSU_FALLBACK_THRES"]
+        )
+    )
+    
+    sc_obs = ndfsi.gt(ee.Image.constant(final_thres)) \
+        .And(img.select("nir").gt(thresholds["NIR_THRES"])) \
+        .And(img.select("green").gt(thresholds["GREEN_THRES"]))
+
     return img.addBands(sc_obs.rename("sc_obs")).select("sc_obs").toUint8().copyProperties(img, ["system:time_start"])
 
 #===============================================================================
