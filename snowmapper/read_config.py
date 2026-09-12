@@ -225,8 +225,8 @@ def read_config(config_file):
     # Enforce max 12-month window
     month_diff = (end_year - start_year) * 12 + (end_month - start_month)
     if month_diff > 11:
-        raise ValueError(
-            "Configuration cannot exceed one hydrological year / 12-month period (maximum)."
+        print(
+            f"-- WARNING -- Configuration settings exceed one hydrological year. This is highly discouraged for reconstructions due to computational cost."
         )
     elif month_diff < 0:
         raise ValueError("end_date must be after start_date.")
